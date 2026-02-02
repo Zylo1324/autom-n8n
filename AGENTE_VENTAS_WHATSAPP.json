@@ -1,0 +1,1069 @@
+{
+  "name": "WHATSAPP VENTAS",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.messages[0].text.body }}",
+                    "rightValue": "={{ $json.body.messages[0].text }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "2b435080-f3be-45bd-9ee2-461289d81771"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Texto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ce02913f-6854-4bc5-915f-b6073adb64ab",
+                    "leftValue": "={{ $json.body.messages[0].voice.id }}",
+                    "rightValue": "={{ $json.body.messages[0].voice }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Audio"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        560,
+        80
+      ],
+      "id": "b5444834-42ac-4bb7-81a5-4ed8752c5e54",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "28b24f3b-4510-46f6-b1a6-89cdf9e64858",
+              "name": "Texto",
+              "value": "={{ $json.body.messages[0].text.body }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1020,
+        80
+      ],
+      "id": "21686fdd-0d6d-4adc-9767-de65a2aeba36",
+      "name": "Captura Texto"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e9956d73-5ef2-4ebc-8037-bbe5c51ba5eb",
+              "name": "nombre_producto",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "6ad01576-7555-472d-b02d-f8b3690e6ca2",
+              "name": "CHAT_ID",
+              "value": "={\n  \"chatId\": \"{{ $json.text }}\"\n}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        980,
+        560
+      ],
+      "id": "6e72f066-aebb-4494-bdda-aebd6987cbc3",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://gate.whapi.cloud/messages/text",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={\n  \"Authorization\": \"STXkQtbaFCx7jv38HqhCeBCQVf0ifjnJ\",  \n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json\"\n}\n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"to\": \"{{ $('WHATSAPP').item.json.body.messages[0].chat_id }}\",\n  \"body\": \"{{ $json.output }}\",\n  \"typing_time\": 2.5\n}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        560
+      ],
+      "id": "a82c312e-2361-4164-ab46-e9ddc39a6792",
+      "name": "Saludo Whatsapp"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://gate.whapi.cloud/messages/image",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Authorization\": \"Bearer STXkQtbaFCx7jv38HqhCeBCQVf0ifjnJ\",\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json\"\n}\n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"to\": \"{{ $('WHATSAPP').item.json.body.messages[0].chat_id }}\",\n \"media\": \"{{ $('Code1').item.json.media }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1860,
+        560
+      ],
+      "id": "3686a45c-499e-4fe4-b0f0-9e3981b13f84",
+      "name": "Envío Imagen Producto"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        840
+      ],
+      "id": "2f2784d0-4c0b-4505-a8e9-b04556342bb0",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "qidv9XnQ7xFGNhnA",
+          "name": "OpenAi account 26"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c15efbaa-3769-4b3b-852a-c9a1af203b39",
+                    "leftValue": "={{ $('IA INTENCIÓN CLIENTE').item.json.output }}",
+                    "rightValue": "crema_antiarrugas.jpg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SOLICITUD_CREMA"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "02888f76-de43-438a-a12e-7f54c4f977ee",
+                    "leftValue": "={{ $('IA INTENCIÓN CLIENTE').item.json.output }}",
+                    "rightValue": "gotas_ansiedad.jpg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SOLICITUD_GOTAS"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('IA INTENCIÓN CLIENTE').item.json.output }}",
+                    "rightValue": "=CONVERSACION",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "bd5d8ce2-56c9-40e2-9994-469a412f6549"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CONTINUAR CONVERSACIÓN"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ca803938-7b1c-49a4-8c0e-b9eb3e92ba9b",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "=PRECIO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PRECIO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a640729a-001d-4f55-a10a-5b5cb3a793a4",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "=COMPRAR",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "COMPRA"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "47435f1c-e0b0-4420-ac7c-7d6f36529017",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "=SERVICIOS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SERVICIOS"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "795bcd84-45b1-4d60-be9a-df04eb83ca63",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "=NO DISPONIBLE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "NO DISPONIBLE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        640,
+        560
+      ],
+      "id": "6fb22e80-09aa-4320-97dd-6eb442c6b038",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "options": {
+          "systemMessage": "=Eres el asistente virtual de Spa Aura Vital, un spa que ofrece productos y servicios de bienestar.\nRespondes por WhatsApp como si fueras una persona real del equipo: cercana, cálida, humana y profesional.\nTus respuestas deben ser cortas, amables, sin rodeos, en una sola línea y con máximo 1 emoji. Evita frases robotizadas o largas.\n\n📥 CONTEXTO DEL CLIENTE\nMensaje del cliente: {{ $('Code').item.json.text }}\nEtiqueta detectada: {{ $json.output }}\n\n🔁 MEMORIA Y SALUDO INICIAL\nAntes de responder, verifica la memoria:\n\nSi hola = true, no saludes.\n\nSi hola no existe, significa que es el primer mensaje del cliente.\n👉 En ese caso, elige aleatoriamente uno de estos saludos cálidos y agradables:\n\n\"¡Hola! Qué alegría tenerte por aquí 😊 ¿En qué te puedo ayudar hoy?\"\n\n\"¡Hola! Bienvenid@ a Spa Aura 🌿 Cuéntame, ¿qué estás buscando?\"\n\n\"¡Hola! ¿Cómo estás? Gracias por escribirnos a Spa Aura 💖\"\n\nDespués de saludar por primera vez, guarda esto en la memoria:\nhola = true\n\n🧴 PRODUCTOS Y PRECIOS\n\ngotas_ansiedad.jpg → Gotas para la ansiedad: $30.000\n\ncrema_antiarrugas.jpg → Crema antiarrugas: $40.000\n\n🎯 RESPUESTAS SEGÚN LA ETIQUETA (si coincide con el texto):\n\nEtiqueta: crema_antiarrugas.jpg\n\"Me encanta esta crema, deja la piel súper suave y rejuvenecida ✨\"\n\nEtiqueta: gotas_ansiedad.jpg\n\"Estas gotas me ayudaron mucho en días de estrés. Son naturales y efectivas 🍃\"\n\nEtiqueta: PRECIO\n\"Vale $30.000. Yo las probé y me ayudaron a dormir mejor 🌿\"\n\nEtiqueta: COMPRAR\n\"Dale. Banco Caribe, cuenta 9876543210. Mándame el comprobante y ya con eso seguimos 📝\"\n\nEtiqueta: NO DISPONIBLE\n\"Por ahora no contamos con eso, pero puedo ayudarte a elegir algo que te guste.\"\n\nEtiqueta: SERVICIOS\n\"Tenemos masajes relajantes de 30 y 60 minutos. Son una delicia.\"\n\nEtiqueta: CONVERSACION\nSi hola = true, responde con amabilidad sin saludar.\nSi hola no existe, usa uno de los saludos cálidos definidos arriba y guarda hola = true.\n\n⚠️ SI LA ETIQUETA NO COINCIDE CON EL TEXTO\nIgnora la etiqueta y responde solo según el contenido del mensaje.\n\n🚫 REGLAS FINALES\n\nNo repitas saludos.\n\nNo inventes productos.\n\nNo uses más de 1 emoji por mensaje.\n\nSolo responde una línea por turno.\n\nNo escribas explicaciones técnicas ni menciones internas de etiquetas o flujos."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        1000
+      ],
+      "id": "969b1525-905a-4d13-9ec9-0f569149c066",
+      "name": "AI CONVERSACIÓN"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        1200
+      ],
+      "id": "311ca64c-d8d9-4b19-b48e-abe056bfa213",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "qidv9XnQ7xFGNhnA",
+          "name": "OpenAi account 26"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let extractedText = '';\n\nfor (const item of items) {\n  if (item.json.text && item.json.text.trim() !== '') {\n    extractedText = item.json.text.trim();\n    break;\n  }\n  if (item.json.Texto && item.json.Texto.trim() !== '') {\n    extractedText = item.json.Texto.trim();\n    break;\n  }\n}\n\nreturn [{ json: { text: extractedText } }];\n\n\n\n\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        280
+      ],
+      "id": "bc6b85ab-4073-42c5-9adb-acc9f3b88c19",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://gate.whapi.cloud/messages/text",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={\n  \"Authorization\": \"STXkQtbaFCx7jv38HqhCeBCQVf0ifjnJ\",  \n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json\"\n}\n",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"to\": \"{{ $('WHATSAPP').item.json.body.messages[0].chat_id }}\",\n  \"body\": \"{{ $('AI CONVERSACIÓN').item.json.output }}\",\n  \"typing_time\": {{ ($json.delay * 3) / 1000 }}\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        1000
+      ],
+      "id": "c81b62eb-1aa8-4f4c-aebc-ec228a15ea48",
+      "name": "Continuar Conversación"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1140,
+        280
+      ],
+      "id": "dcf71b2f-7476-4adb-8828-a186d334dce5",
+      "name": "Transcribe Audio",
+      "credentials": {
+        "openAiApi": {
+          "id": "qidv9XnQ7xFGNhnA",
+          "name": "OpenAi account 26"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Eres un asistente que clasifica mensajes de clientes en una de estas intenciones claras, usando palabras clave y contexto. Tu tarea es identificar la intención principal del mensaje, sin adivinar ni extenderte.\n\n---\n\n🔹 CATEGORÍAS POSIBLES:\n\n1. **crema_antiarrugas.jpg** → Si el mensaje menciona exactamente “crema” y “antiarrugas” juntos.\n\n2. **gotas_ansiedad.jpg** → Si el mensaje menciona exactamente “gotas” y “ansiedad” juntos.\n\n3. **COMPRAR** → El cliente expresa intención clara de adquirir algo.\nPalabras clave típicas: “quiero comprar”, “me interesa”, “cómo pago”, “compra”, “ordenar”.\n\n4. **PRECIO** → Pregunta exclusivamente por el valor o costo.\nPalabras clave típicas: “cuánto cuesta”, “precio”, “costo”, “valor”, “tarifa”.\n\n5. **SERVICIOS** → Pregunta por servicios que ofrece el spa.\nPalabras clave típicas: “qué servicios”, “masajes”, “tratamientos”, “aromaterapia”, “uñas”.\n\n6. **CONVERSACION** → Mensajes cortos, saludos o sin intención clara de compra.\nEjemplos: “hola”, “buenos días”, “gracias”, “qué tal”, “cómo estás”, “hey”.\n\n7. **NO DISPONIBLE** → Menciones de productos que no están en el catálogo (por ejemplo, “crema piel grasa”, “suero facial”, etc.).\n\n---\n\n🎯 REGLAS CLAVE:\n\n- Solo responde con una **etiqueta exacta** de esta lista:  \n  `crema_antiarrugas.jpg`, `gotas_ansiedad.jpg`, `COMPRAR`, `PRECIO`, `SERVICIOS`, `CONVERSACION`, `NO DISPONIBLE`.\n\n- **No escribas saludos, comentarios ni explicaciones. Solo la etiqueta exacta.**\n\n---\n\n📌 EJEMPLOS:\n\n“¿Tienen crema antiarrugas?” → crema_antiarrugas.jpg  \n“Quiero comprar gotas para la ansiedad” → COMPRAR  \n“¿Cuánto cuesta la crema antiarrugas?” → PRECIO  \n“¿Qué servicios ofrecen?” → SERVICIOS  \n“Hola, ¿cómo estás?” → CONVERSACION  \n“Busco crema para piel grasa” → NO DISPONIBLE\n\n---\n\n🧠 CONTEXTO:\n\nEste es el mensaje del cliente:  \n**{{ $json.text }}**\n\nAhora clasifícalo con precisión, siguiendo las reglas anteriores.  \nSolo responde una de las 7 etiquetas exactas.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        260,
+        640
+      ],
+      "id": "be30b0a3-b5bd-4bf9-8bd7-b9729f57dcb8",
+      "name": "IA INTENCIÓN CLIENTE"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "311ec3ab-22f8-458b-a2b5-caa1c9b5b725",
+              "name": "delay",
+              "value": "={{ ($json.output.length + 40) * 5 }}\n\n\n\n\n",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1440,
+        1000
+      ],
+      "id": "098128e0-69ab-46b1-89d4-d1f41e4f519d",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1340,
+        740
+      ],
+      "id": "b6613f73-fb7a-4ec9-aa31-9e46c887739b",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "qidv9XnQ7xFGNhnA",
+          "name": "OpenAi account 26"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const producto = ($json[\"nombre_producto\"] || \"\").toLowerCase().replace(\".jpg\", \"\").trim();\n\nconst chatId = $json[\"to\"] || $('WHATSAPP').item.json.body.messages[0].chat_id;\n\nlet urlImagen = \"\";\n\nif (producto.includes(\"gotas\")) {\n  urlImagen = \"https://i.ibb.co/zHPvkR1f/gotas-ansiedad.jpg\";\n} else if (producto.includes(\"crema\")) {\n  urlImagen = \"https://i.ibb.co/dwRt9F07/crema-antiarrugas.jpg\";\n} else {\n  urlImagen = \"https://i.ibb.co/dwRt9F07/crema-antiarrugas.jpg\"; // fallback\n}\n\nreturn [{\n  json: {\n    to: chatId,\n    media: urlImagen,\n    productoRecibido: producto\n  }\n}];\n\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        560
+      ],
+      "id": "df6234b5-6e0e-4456-80d4-170b46c61e60",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('WHATSAPP').item.json.body.messages[0].chat_id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1220,
+        1200
+      ],
+      "id": "24614e94-6b7c-4ed1-93f3-ac49df49f626",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dac10c31-9f63-43c2-891c-98a363fcba1f",
+              "leftValue": "={{ $json.body.messages[0].from_me }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        280,
+        100
+      ],
+      "id": "58bdcff0-afc6-49e8-933e-8f7c9e484784",
+      "name": "If",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        460,
+        280
+      ],
+      "id": "c038867d-fbfc-4b2e-a02c-9a170a38c71f",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.text }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        360,
+        840
+      ],
+      "id": "3c17ac11-b35f-49ae-b075-31fd19513c48",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('WHATSAPP').item.json.body.messages[0].chat_id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1500,
+        760
+      ],
+      "id": "ac2512c2-4268-46d3-96d5-0e7f348edb4f",
+      "name": "Simple Memory2",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Code').item.json.text }}",
+        "options": {
+          "systemMessage": "=Eres el asistente virtual de Spa Aura Vital, un spa que ofrece productos y servicios de bienestar.\nRespondes por WhatsApp como si fueras parte del equipo humano: de forma cálida, profesional y natural.\nUsa frases cortas, amables, confiables y sin rodeos. Nunca parezcas un robot.\n\n🧠 LÓGICA DE SALUDO (usa solo la memoria, no el JSON)\nAntes de responder, revisa si en la memoria existe la variable hola.\n\nSi hola es igual a true, significa que ya saludaste antes. 👉 En ese caso, responde directo, sin decir \"Hola\".\n\nSi hola no existe en la memoria, significa que es la primera vez que hablas con el cliente. 👉 Entonces, elige aleatoriamente uno de estos tres saludos y úsalo tal cual, sin cambiarlo:\n\n¡Hola! ¿Cómo estás? Gracias por escribirnos a Spa Aura 💖\n\n¡Hola! Qué alegría tenerte por aquí 😊\n\n¡Hola! Bienvenid@ a Spa Aura, ¿cómo te podemos ayudar? 🌿\n\nDespués del saludo, responde directamente según la etiqueta, en la misma línea.\nAl terminar, guarda esto en memoria:\n\n{\"hola\": true}\n\n⚠️ Si el mensaje del cliente contiene tanto un saludo como una pregunta sobre un producto o servicio (por ejemplo: “Hola, ¿tienes gotas para la ansiedad?”), haz ambas cosas en una sola línea: saluda (si es la primera vez) y responde inmediatamente sobre el producto. No repitas el saludo.\n\n⚠️ Nunca adivines si ya saludaste o no. Decide solo con base en la memoria hola.\n\n📥 CONTEXTO DEL MENSAJE DEL CLIENTE\nTexto recibido:\n{{ $json.text }}\n\nEtiqueta detectada:\n{{ $json.output }}\n\nID de conversación:\n{{ $('Code').item.json.chatId }}\n\n🎯 RESPUESTAS SEGÚN LA ETIQUETA\n🧴 Etiqueta: crema_antiarrugas.jpg\nFrase cálida y natural describiendo la crema. Máximo un emoji.\n\nEjemplos:\n\nEsta crema me la aplico para firmeza y textura. Te va a encantar ✨\n\nEsta es de las favoritas para arrugas. Te deja la piel suavecita 👌\n\n💧 Etiqueta: gotas_ansiedad.jpg\nFrase personal sobre las gotas. Máximo un emoji.\n\nEjemplos:\n\nEstas goticas me han servido mucho en días de estrés. Mira 👇\n\nEstas son las más pedidas para relajarse. Te van a caer buenísimo 😌\n\n💰 Etiqueta: PRECIO\nSolo el precio + comentario personal. Nunca saludes.\n\n🛒 Etiqueta: COMPRAR\nSolo datos de pago. Nunca saludes.\n\n❌ Etiqueta: NO DISPONIBLE\nMensaje cálido, sin saludo, ofreciendo alternativas.\n\n💆‍♀️ Etiqueta: SERVICIOS\nFrase corta sobre servicios. No saludes si ya lo hiciste.\n\n💬 Etiqueta: CONVERSACION\nSaludo breve solo si no se ha saludado antes. Si ya saludaste, responde con amabilidad.\n\n⚠️ REGLAS FINALES\nNunca repitas saludos. Usa solo la memoria.\n\nSolo una frase por turno.\n\nMáximo un emoji por mensaje.\n\nTodo en una sola línea.\n\nNo inventes. Responde solo con base en la etiqueta y la memoria.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        560
+      ],
+      "id": "655149bc-e55a-44bf-a2ba-02235563804c",
+      "name": "SALUDO INICIAL"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('WHATSAPP').item.json.body.messages[0].voice.link }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        280
+      ],
+      "id": "c6965438-068f-4095-9985-305e38a6984b",
+      "name": "Capturar Audio"
+    },
+    {
+      "parameters": {
+        "content": "RECEPCIÓN DE MENSAJE WHATSAPP\n",
+        "height": 416,
+        "width": 736,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ba793ddb-7919-4fab-8024-d16f573796b2",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "PROCESAMIENTO DE MENSAJE\n\n",
+        "height": 416,
+        "width": 732,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        0
+      ],
+      "id": "f8b17f96-22bb-44fa-8c88-c9019d8da0ec",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "ANÁLISIS INTENCIÓN CLIENTE",
+        "height": 448,
+        "width": 816,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        60,
+        520
+      ],
+      "id": "04f5a6fb-0aab-497c-b6ce-06e4defef6bf",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        40,
+        100
+      ],
+      "id": "e55ee304-6e5d-4b15-a8c0-3cc4a1c29463",
+      "name": "WHATSAPP",
+      "webhookId": "be54a501-5cad-4d1f-b835-70ba8c6c0a9c"
+    },
+    {
+      "parameters": {
+        "content": "SALUDO INICIAL Y ENVÍO IMAGEN",
+        "height": 400,
+        "width": 1092
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        960,
+        480
+      ],
+      "id": "e75429d4-166a-40db-8724-285ec4aab791",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "CONVERSACIÓN Y CIERRE DE VENTA",
+        "height": 448,
+        "width": 776,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        920
+      ],
+      "id": "3e1757b9-c078-4cb5-97b4-2dec51bc1618",
+      "name": "Sticky Note4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Captura Texto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Capturar Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Captura Texto": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Saludo Whatsapp": {
+      "main": [
+        [
+          {
+            "node": "Envío Imagen Producto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "IA INTENCIÓN CLIENTE",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI CONVERSACIÓN",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI CONVERSACIÓN",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI CONVERSACIÓN",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI CONVERSACIÓN",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI CONVERSACIÓN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI CONVERSACIÓN": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI CONVERSACIÓN",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "IA INTENCIÓN CLIENTE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Audio": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IA INTENCIÓN CLIENTE": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Continuar Conversación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SALUDO INICIAL",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "SALUDO INICIAL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI CONVERSACIÓN",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "IA INTENCIÓN CLIENTE",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory2": {
+      "ai_memory": [
+        [
+          {
+            "node": "SALUDO INICIAL",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SALUDO INICIAL": {
+      "main": [
+        [
+          {
+            "node": "Saludo Whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Capturar Audio": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WHATSAPP": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0571bcfe-003b-4ab8-9e95-08f08206d745",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "14054e8fec71e2d50db2fb8bb84f000f83220e65c6c3249b17137c3e9542f36f"
+  },
+  "id": "tLTVR5DjSUzCl6P1",
+  "tags": []
+}
