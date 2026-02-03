@@ -94,9 +94,7 @@
         "path": "whatsapp-inbound",
         "method": "POST",
         "responseMode": "onReceived",
-        "options": {
-          "responseData": "={{ {\"status\":\"ok\"} }}"
-        }
+        "responseData": "={{ {\"status\":\"ok\"} }}"
       },
       "id": "webhook_in",
       "name": "ENTRADA WHATSAPP: Webhook",
@@ -360,7 +358,7 @@
       "parameters": {
         "url": "={{$env.WHATSAPP_API_URL}}",
         "method": "POST",
-        "authentication": "headerAuth",
+        "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -608,7 +606,7 @@
       "parameters": {
         "url": "={{$env.WHATSAPP_API_URL}}",
         "method": "POST",
-        "authentication": "headerAuth",
+        "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -820,7 +818,7 @@
       "parameters": {
         "url": "={{$env.WHATSAPP_API_URL}}",
         "method": "POST",
-        "authentication": "headerAuth",
+        "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -872,7 +870,7 @@
       "parameters": {
         "url": "={{$env.WHATSAPP_API_URL}}",
         "method": "POST",
-        "authentication": "headerAuth",
+        "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
