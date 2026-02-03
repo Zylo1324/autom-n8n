@@ -1,0 +1,1148 @@
+{
+  "name": "Automatizacion Cobros WhatsApp + Sheets (PRO)",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Webhook In",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-inbound",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "2",
+      "name": "Normalizar número",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const body = $json.body || $json;\nconst fromRaw = body.from || \"\";\nconst text = body.text || body.body?.text || body.message?.text || \"\";\nconst normalized = fromRaw ? `+${fromRaw.replace(/\\D/g, \"\")}` : \"\";\nconst owner = $env.OWNER_WHATSAPP || \"\";\nreturn [{ json: { from_raw: fromRaw, from: normalized, text, isOwner: normalized !== \"\" && normalized === owner } }];"
+      }
+    },
+    {
+      "id": "3",
+      "name": "Validar origen",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.from}}",
+              "operation": "notEmpty"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "4",
+      "name": "Responder invalido",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -160
+      ],
+      "parameters": {
+        "responseCode": 200,
+        "responseData": "json",
+        "responseBody": "={{ {status: 'ok'} }}"
+      }
+    },
+    {
+      "id": "5",
+      "name": "Es owner?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.isOwner}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "6",
+      "name": "Admin: Parse comando",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -160
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const text = ($json.text || '').trim();\nconst matchValidar = text.match(/^VALIDAR PAGO\\s+(\\S+)/i);\nconst matchBuscar = text.match(/^BUSCAR CLIENTE\\s+(.+)/i);\nlet action = 'NONE';\nlet query = '';\nif (matchValidar) {\n  action = 'VALIDAR_PAGO';\n  query = matchValidar[1];\n} else if (matchBuscar) {\n  action = 'BUSCAR_CLIENTE';\n  query = matchBuscar[1].trim();\n}\nreturn [{ json: { action, query, phone: $json.from, text } }];"
+      }
+    },
+    {
+      "id": "7",
+      "name": "Admin: Es validar pago?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -160
+      ],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.action}}",
+              "operation": "equals",
+              "value2": "VALIDAR_PAGO"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "8",
+      "name": "Admin: Leer clientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1440,
+        -240
+      ],
+      "parameters": {
+        "operation": "read",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "clientes!A:Z",
+        "returnAll": true
+      }
+    },
+    {
+      "id": "9",
+      "name": "Admin: Encontrar cliente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -240
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const query = ($node['Admin: Parse comando'].json.query || '').trim();\nconst rows = $input.all().map(i => i.json);\nconst match = rows.find(row => String(row.cliente_id || '').toLowerCase() === query.toLowerCase());\nreturn [{ json: { cliente: match || null, query } }];"
+      }
+    },
+    {
+      "id": "10",
+      "name": "Admin: Actualizar cliente",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1920,
+        -240
+      ],
+      "parameters": {
+        "operation": "update",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "clientes!A:Z",
+        "dataMode": "autoMapInputData",
+        "key": "cliente_id",
+        "valueInputMode": "USER_ENTERED"
+      }
+    },
+    {
+      "id": "11",
+      "name": "Admin: Log pago",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        2160,
+        -240
+      ],
+      "parameters": {
+        "operation": "append",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "pagos!A:H",
+        "dataMode": "autoMapInputData",
+        "valueInputMode": "USER_ENTERED"
+      }
+    },
+    {
+      "id": "12",
+      "name": "Admin: Respuesta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2400,
+        -240
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "jsonParameters": true,
+        "headerParametersJson": "={{JSON.stringify({Authorization: 'Bearer ' + $env.WHATSAPP_TOKEN})}}",
+        "bodyParametersJson": "={{JSON.stringify({ to: $node['Normalizar número'].json.from, type: 'text', text: { body: $json.mensaje_admin || 'Comando procesado' } })}}"
+      }
+    },
+    {
+      "id": "13",
+      "name": "Responder admin",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        -240
+      ],
+      "parameters": {
+        "responseCode": 200,
+        "responseData": "json",
+        "responseBody": "={{ {status: 'ok'} }}"
+      }
+    },
+    {
+      "id": "14",
+      "name": "Leer clientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        960,
+        120
+      ],
+      "parameters": {
+        "operation": "read",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "clientes!A:Z",
+        "returnAll": true
+      }
+    },
+    {
+      "id": "15",
+      "name": "Buscar cliente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        120
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const inputPhone = $node['Normalizar número'].json.from || '';\nconst normalize = (value) => `+${String(value || '').replace(/\\D/g, '')}`;\nconst rows = $input.all().map(i => i.json);\nconst match = rows.find(row => normalize(row.whatsapp || row.phone || '') === normalize(inputPhone));\nreturn [{ json: { phone: inputPhone, cliente: match || null } }];"
+      }
+    },
+    {
+      "id": "16",
+      "name": "Cliente existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        120
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.cliente !== null}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "17",
+      "name": "Mensaje alta",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -40
+      ],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "mensaje_final",
+              "value": "Hola, para registrarte necesito: nombre, plan, día de pago, monto mensual y link de pago si ya lo tienes."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "18",
+      "name": "Detectar intención",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        200
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const text = ($node['Normalizar número'].json.text || '').toLowerCase();\nlet intent = 'OTRO';\nif (text.includes('pagar') || text.includes('pago')) intent = 'QUIERO_PAGAR';\nelse if (text.includes('ya pag')) intent = 'YA_PAGUE';\nelse if (text.includes('soporte') || text.includes('repar')) intent = 'SOPORTE';\nelse if (text.includes('cambiar plan')) intent = 'CAMBIAR_PLAN';\nelse if (text.includes('humano') || text.includes('asesor')) intent = 'HUMANO';\nreturn [{ json: { ...$json, intent } }];"
+      }
+    },
+    {
+      "id": "19",
+      "name": "FAQ: Leer",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1920,
+        200
+      ],
+      "parameters": {
+        "operation": "read",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "faq!A:B",
+        "returnAll": true
+      }
+    },
+    {
+      "id": "20",
+      "name": "FAQ: Match",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        200
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const text = ($node['Normalizar número'].json.text || '').toLowerCase();\nconst rows = $input.all().map(i => i.json);\nlet faq = null;\nfor (const row of rows) {\n  const q = String(row.pregunta || row.question || '').toLowerCase();\n  if (q && text.includes(q)) {\n    faq = row;\n    break;\n  }\n}\nreturn [{ json: { ...$json, faq } }];"
+      }
+    },
+    {
+      "id": "21",
+      "name": "FAQ encontrada?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        200
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.faq !== null}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "22",
+      "name": "Usar respuesta FAQ",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        120
+      ],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "mensaje_final",
+              "value": "={{$json.faq.respuesta || $json.faq.answer}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "23",
+      "name": "Plantilla cliente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        280
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const c = $node['Buscar cliente'].json.cliente || {};\nconst nombre = c.nombre || 'Hola';\nconst monto = c.monto_mensual || c.monto || '';\nconst venc = c.proximo_vencimiento || '';\nconst link = c.link_pago || c.link || '';\nconst mensaje = `${nombre}, tu próximo vencimiento es ${venc}. Monto mensual: ${monto}. Puedes pagar aquí: ${link}`;\nreturn [{ json: { ...$json, mensaje_final: mensaje } }];"
+      }
+    },
+    {
+      "id": "24",
+      "name": "Enviar WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2880,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "jsonParameters": true,
+        "headerParametersJson": "={{JSON.stringify({Authorization: 'Bearer ' + $env.WHATSAPP_TOKEN})}}",
+        "bodyParametersJson": "={{JSON.stringify({ to: $node['Buscar cliente'].json.phone || $node['Normalizar número'].json.from, type: 'text', text: { body: $json.mensaje_final } })}}"
+      }
+    },
+    {
+      "id": "25",
+      "name": "Log mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        200
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const cliente = $node['Buscar cliente'].json.cliente || {};\nconst resumen = String($json.mensaje_final || '').slice(0, 120);\nreturn [{ json: { timestamp: new Date().toISOString(), cliente_id: cliente.cliente_id || '', tipo_mensaje: $node['Detectar intención'].json.intent || 'OTRO', resumen } }];"
+      }
+    },
+    {
+      "id": "26",
+      "name": "Append mensajes_log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        3360,
+        200
+      ],
+      "parameters": {
+        "operation": "append",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "mensajes_log!A:H",
+        "dataMode": "autoMapInputData",
+        "valueInputMode": "USER_ENTERED"
+      }
+    },
+    {
+      "id": "27",
+      "name": "Responder webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        3600,
+        200
+      ],
+      "parameters": {
+        "responseCode": 200,
+        "responseData": "json",
+        "responseBody": "={{ {status: 'ok'} }}"
+      }
+    },
+    {
+      "id": "28",
+      "name": "Cron diario",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        0,
+        520
+      ],
+      "parameters": {
+        "timezone": "={{$env.TIMEZONE}}",
+        "triggerTimes": [
+          {
+            "mode": "everyDay",
+            "hour": 9,
+            "minute": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "29",
+      "name": "Recordatorios: Leer clientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        240,
+        520
+      ],
+      "parameters": {
+        "operation": "read",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "clientes!A:Z",
+        "returnAll": true
+      }
+    },
+    {
+      "id": "30",
+      "name": "Calcular recordatorios",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        520
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const today = new Date();\nconst toDate = (value) => value ? new Date(value) : null;\nconst result = [];\nfor (const item of $input.all()) {\n  const c = item.json;\n  if (String(c.consentimiento_mensajes || '').toUpperCase() !== 'SI') continue;\n  const venc = toDate(c.proximo_vencimiento);\n  if (!venc) continue;\n  const diff = Math.floor((venc - new Date(today.toDateString())) / 86400000);\n  let tipo = null;\n  if (diff === 7) tipo = 'RECORDATORIO_7D';\n  else if (diff === 2) tipo = 'RECORDATORIO_2D';\n  else if (diff === 0) tipo = 'VENCE_HOY';\n  else if (diff === -3) tipo = 'SEGUIMIENTO_3D';\n  else if (diff === -7) tipo = 'SEGUIMIENTO_7D';\n  else if (diff === -14) tipo = 'MOROSO_14D';\n  if (!tipo) continue;\n  result.push({ json: { ...c, tipo_mensaje: tipo } });\n}\nreturn result;"
+      }
+    },
+    {
+      "id": "31",
+      "name": "Recordatorios: Leer log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        720,
+        520
+      ],
+      "parameters": {
+        "operation": "read",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "mensajes_log!A:H",
+        "returnAll": true
+      }
+    },
+    {
+      "id": "32",
+      "name": "Idempotencia",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        520
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const logs = $input.all().map(i => i.json);\nconst pending = $node['Calcular recordatorios'].json ? [$node['Calcular recordatorios'].json] : $node['Calcular recordatorios'].data;\nconst safePending = Array.isArray(pending) ? pending : $items('Calcular recordatorios');\nconst result = [];\nfor (const item of safePending) {\n  const c = item.json || item;\n  const key = `${c.cliente_id || ''}_${c.tipo_mensaje || ''}_${c.proximo_vencimiento || ''}`;\n  const exists = logs.some(l => String(l.message_key || '') === key);\n  if (!exists) result.push({ json: { ...c, message_key: key } });\n}\nreturn result;"
+      }
+    },
+    {
+      "id": "33",
+      "name": "Construir recordatorio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        520
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const c = $json;\nconst nombre = c.nombre || 'Hola';\nconst link = c.link_pago || '';\nconst mensajes = {\n  RECORDATORIO_7D: `Hola ${nombre}, tu pago vence en 7 días. Link: ${link}`,\n  RECORDATORIO_2D: `Hola ${nombre}, tu pago vence en 2 días. Link: ${link}`,\n  VENCE_HOY: `Hola ${nombre}, tu pago vence hoy. Link: ${link}`,\n  SEGUIMIENTO_3D: `Hola ${nombre}, tu pago venció hace 3 días. Link: ${link}`,\n  SEGUIMIENTO_7D: `Hola ${nombre}, tu pago venció hace 7 días. Link: ${link}`,\n  MOROSO_14D: `Hola ${nombre}, tu pago venció hace 14 días. Link: ${link}`\n};\nconst mensaje = mensajes[c.tipo_mensaje] || `Hola ${nombre}, recuerda tu pago.`;\nreturn [{ json: { ...c, mensaje_final: `${mensaje} #${c.message_key}` } }];"
+      }
+    },
+    {
+      "id": "34",
+      "name": "Pausa 1s",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        520
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));\nawait wait(1000);\nreturn $input.all();"
+      }
+    },
+    {
+      "id": "35",
+      "name": "Enviar recordatorio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1680,
+        520
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "jsonParameters": true,
+        "headerParametersJson": "={{JSON.stringify({Authorization: 'Bearer ' + $env.WHATSAPP_TOKEN})}}",
+        "bodyParametersJson": "={{JSON.stringify({ to: $json.whatsapp || $json.phone || '', type: 'text', text: { body: $json.mensaje_final } })}}"
+      }
+    },
+    {
+      "id": "36",
+      "name": "Append log recordatorio",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1920,
+        520
+      ],
+      "parameters": {
+        "operation": "append",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "mensajes_log!A:H",
+        "dataMode": "autoMapInputData",
+        "valueInputMode": "USER_ENTERED"
+      }
+    },
+    {
+      "id": "37",
+      "name": "Cron reporte semanal",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        0,
+        900
+      ],
+      "parameters": {
+        "timezone": "={{$env.TIMEZONE}}",
+        "triggerTimes": [
+          {
+            "mode": "everyWeek",
+            "weekday": "1",
+            "hour": 8,
+            "minute": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "38",
+      "name": "Cron reporte diario",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1040
+      ],
+      "parameters": {
+        "timezone": "={{$env.TIMEZONE}}",
+        "triggerTimes": [
+          {
+            "mode": "everyDay",
+            "hour": 7,
+            "minute": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "39",
+      "name": "Reporte: Leer clientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        240,
+        970
+      ],
+      "parameters": {
+        "operation": "read",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "clientes!A:Z",
+        "returnAll": true
+      }
+    },
+    {
+      "id": "40",
+      "name": "Calcular reporte",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        970
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "let alDia = 0;\nlet porVencer = 0;\nlet vencidos = 0;\nlet morosos = 0;\nlet montoEsperado = 0;\nconst today = new Date();\nfor (const item of $input.all()) {\n  const c = item.json;\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  const diff = venc ? Math.floor((venc - new Date(today.toDateString())) / 86400000) : null;\n  const monto = Number(c.monto_mensual || 0);\n  montoEsperado += monto;\n  if (diff === null) continue;\n  if (diff >= 3) alDia += 1;\n  else if (diff >= 0) porVencer += 1;\n  else if (diff >= -7) vencidos += 1;\n  else morosos += 1;\n}\nreturn [{ json: { alDia, porVencer, vencidos, morosos, montoEsperado } }];"
+      }
+    },
+    {
+      "id": "41",
+      "name": "Mensaje resumen",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        720,
+        970
+      ],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "mensaje_final",
+              "value": "={{`Resumen: Al día ${$json.alDia}, Por vencer ${$json.porVencer}, Vencidos ${$json.vencidos}, Morosos ${$json.morosos}, Monto esperado ${$json.montoEsperado}`}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "42",
+      "name": "Enviar reporte",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        960,
+        970
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "jsonParameters": true,
+        "headerParametersJson": "={{JSON.stringify({Authorization: 'Bearer ' + $env.WHATSAPP_TOKEN})}}",
+        "bodyParametersJson": "={{JSON.stringify({ to: $env.OWNER_WHATSAPP, type: 'text', text: { body: $json.mensaje_final } })}}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook In": {
+      "main": [
+        [
+          {
+            "node": "Normalizar número",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar número": {
+      "main": [
+        [
+          {
+            "node": "Validar origen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar origen": {
+      "main": [
+        [
+          {
+            "node": "Es owner?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder invalido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es owner?": {
+      "main": [
+        [
+          {
+            "node": "Admin: Parse comando",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Leer clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: Parse comando": {
+      "main": [
+        [
+          {
+            "node": "Admin: Es validar pago?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: Es validar pago?": {
+      "main": [
+        [
+          {
+            "node": "Admin: Leer clientes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Admin: Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: Leer clientes": {
+      "main": [
+        [
+          {
+            "node": "Admin: Encontrar cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: Encontrar cliente": {
+      "main": [
+        [
+          {
+            "node": "Admin: Actualizar cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: Actualizar cliente": {
+      "main": [
+        [
+          {
+            "node": "Admin: Log pago",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: Log pago": {
+      "main": [
+        [
+          {
+            "node": "Admin: Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin: Respuesta": {
+      "main": [
+        [
+          {
+            "node": "Responder admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer clientes": {
+      "main": [
+        [
+          {
+            "node": "Buscar cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar cliente": {
+      "main": [
+        [
+          {
+            "node": "Cliente existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cliente existe?": {
+      "main": [
+        [
+          {
+            "node": "Detectar intención",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensaje alta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje alta": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar intención": {
+      "main": [
+        [
+          {
+            "node": "FAQ: Leer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ: Leer": {
+      "main": [
+        [
+          {
+            "node": "FAQ: Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ: Match": {
+      "main": [
+        [
+          {
+            "node": "FAQ encontrada?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ encontrada?": {
+      "main": [
+        [
+          {
+            "node": "Usar respuesta FAQ",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Plantilla cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Usar respuesta FAQ": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plantilla cliente": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Log mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log mensaje": {
+      "main": [
+        [
+          {
+            "node": "Append mensajes_log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append mensajes_log": {
+      "main": [
+        [
+          {
+            "node": "Responder webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron diario": {
+      "main": [
+        [
+          {
+            "node": "Recordatorios: Leer clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recordatorios: Leer clientes": {
+      "main": [
+        [
+          {
+            "node": "Calcular recordatorios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular recordatorios": {
+      "main": [
+        [
+          {
+            "node": "Recordatorios: Leer log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recordatorios: Leer log": {
+      "main": [
+        [
+          {
+            "node": "Idempotencia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Idempotencia": {
+      "main": [
+        [
+          {
+            "node": "Construir recordatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir recordatorio": {
+      "main": [
+        [
+          {
+            "node": "Pausa 1s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pausa 1s": {
+      "main": [
+        [
+          {
+            "node": "Enviar recordatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar recordatorio": {
+      "main": [
+        [
+          {
+            "node": "Append log recordatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron reporte semanal": {
+      "main": [
+        [
+          {
+            "node": "Reporte: Leer clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron reporte diario": {
+      "main": [
+        [
+          {
+            "node": "Reporte: Leer clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reporte: Leer clientes": {
+      "main": [
+        [
+          {
+            "node": "Calcular reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular reporte": {
+      "main": [
+        [
+          {
+            "node": "Mensaje resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje resumen": {
+      "main": [
+        [
+          {
+            "node": "Enviar reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}
