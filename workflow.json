@@ -27,7 +27,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const body = $json.body ?? $json;\nconst headers = $json.headers ?? {};\nconst query = $json.query ?? {};\nconst msg = body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0] || body.message || body;\nconst rawFrom = msg?.from || body.from || body.sender || body.phone || body?.message?.from || '';\nconst digits = String(rawFrom || '').replace(/\\D/g, '');\nconst normalized = digits ? `+${digits}` : '';\nconst text = msg?.text?.body || body.text || body.message?.text || body.body?.text || body?.message?.body?.text || body?.message?.text?.body || '';\nconst messageId = msg?.id || body.message_id || body.message?.id || body.id || '';\nconst timestamp = msg?.timestamp ? new Date(Number(msg.timestamp) * 1000).toISOString() : (body.timestamp || body.message?.timestamp || new Date().toISOString());\nconst media = msg?.image || msg?.document || msg?.video || null;\nconst messageType = media ? 'media' : 'text';\nconst mediaId = media?.id || body.media_id || '';\nconst mediaMime = media?.mime_type || body.media_mime || '';\nconst secretHeader = headers['x-origin-secret'] || headers['X-ORIGIN-SECRET'];\nconst secretQuery = query.secret || body.secret || '';\nconst providedSecret = secretHeader || secretQuery || '';\nconst secretValid = providedSecret !== '' && providedSecret === ($env.ORIGIN_SECRET || '');\nreturn [{ json: { from_raw: rawFrom, from: normalized, text: String(text || ''), message_id: messageId, timestamp, message_type: messageType, media_id: mediaId, media_mime: mediaMime, secretValid } }];"
+        "code": "const body = $json.body ?? $json;\nconst headers = $json.headers ?? {};\nconst query = $json.query ?? {};\nconst msg = body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0] || body.message || body;\nconst rawFrom = msg?.from || body.from || body.sender || body.phone || body?.message?.from || '';\nconst digits = String(rawFrom || '').replace(/\\D/g, '');\nconst normalized = digits ? `+${digits}` : '';\nconst text = msg?.text?.body || body.text || body.message?.text || body.body?.text || body?.message?.body?.text || body?.message?.text?.body || '';\nlet messageId = msg?.id || body.message_id || body.message?.id || body.id || '';\nif (!messageId) {\n  messageId = `msg_${Date.now()}_${Math.floor(Math.random() * 100000)}`;\n}\n\nconst timestamp = msg?.timestamp ? new Date(Number(msg.timestamp) * 1000).toISOString() : (body.timestamp || body.message?.timestamp || new Date().toISOString());\nconst media = msg?.image || msg?.document || msg?.video || null;\nconst messageType = media ? 'media' : 'text';\nconst mediaId = media?.id || body.media_id || '';\nconst mediaMime = media?.mime_type || body.media_mime || '';\nconst secretHeader = headers['x-origin-secret'] || headers['X-ORIGIN-SECRET'];\nconst secretQuery = query.secret || body.secret || '';\nconst providedSecret = secretHeader || secretQuery || '';\nconst secretValid = providedSecret !== '' && providedSecret === ($env.ORIGIN_SECRET || '');\nreturn [{ json: { from_raw: rawFrom, from: normalized, text: String(text || ''), message_id: messageId, timestamp, message_type: messageType, media_id: mediaId, media_mime: mediaMime, secretValid } }];"
       }
     },
     {
@@ -76,7 +76,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "return [{ json: {\n  whatsapp: $json.from || '',\n  timestamp: $json.timestamp || new Date().toISOString(),\n  message_type: $json.message_type || 'text',\n  text: $json.text || '',\n  media_id: $json.media_id || '',\n  media_mime: $json.media_mime || '',\n  media_url: '',\n  status: 'PENDING',\n  batch_id: ''\n} }];"
+        "code": "return [{ json: {\n  message_id: $node['Normalizar y validar'].json.message_id || $json.message_id || '',\n  whatsapp: $json.from || '',\n  timestamp: $json.timestamp || new Date().toISOString(),\n  message_type: $json.message_type || 'text',\n  text: $json.text || '',\n  media_id: $json.media_id || '',\n  media_mime: $json.media_mime || '',\n  media_url: '',\n  status: 'PENDING',\n  batch_id: ''\n} }];"
       }
     },
     {
@@ -91,7 +91,7 @@
       "parameters": {
         "operation": "append",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "inbox_buffer!A:I",
+        "range": "inbox_buffer!A:J",
         "dataMode": "autoMapInputData",
         "valueInputMode": "USER_ENTERED"
       }
@@ -143,8 +143,9 @@
       "parameters": {
         "operation": "read",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "inbox_buffer!A:I",
-        "returnAll": true
+        "range": "inbox_buffer!A:J",
+        "returnAll": false,
+        "limit": 500
       }
     },
     {
@@ -158,7 +159,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const windowSec = 10;\nconst rows = $input.all().map(i => i.json).filter(r => String(r.status || '').toUpperCase() === 'PENDING');\nconst groups = {};\nfor (const row of rows) {\n  const key = String(row.whatsapp || '').trim();\n  if (!key) continue;\n  if (!groups[key]) groups[key] = [];\n  groups[key].push(row);\n}\nconst now = new Date();\nconst result = [];\nfor (const [whatsapp, items] of Object.entries(groups)) {\n  items.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));\n  const last = items[items.length - 1];\n  const lastTs = new Date(last.timestamp);\n  const diffSec = (now - lastTs) / 1000;\n  if (diffSec < windowSec) continue;\n  const combined = items.map(i => i.text).filter(Boolean).join('\\n');\n  const imageItems = items.filter(i => (i.media_id && String(i.media_mime || '').startsWith('image')));\n  const batchId = `B${Date.now()}_${Math.floor(Math.random() * 1000)}`;\n  result.push({ json: {\n    whatsapp,\n    combined_text: combined,\n    messages: items,\n    has_image: imageItems.length > 0,\n    image_ids: imageItems.map(i => i.media_id),\n    latest_timestamp: last.timestamp,\n    batch_id: batchId,\n    pending_timestamps: items.map(i => i.timestamp),\n    is_owner: whatsapp === ($env.OWNER_WHATSAPP || '')\n  } });\n}\nreturn result;"
+        "code": "const windowSec = 10;\nconst rows = $input.all().map(i => i.json).filter(r => String(r.status || '').toUpperCase() === 'PENDING');\nconst groups = {};\nfor (const row of rows) {\n  const key = String(row.whatsapp || '').trim();\n  if (!key) continue;\n  if (!groups[key]) groups[key] = [];\n  groups[key].push(row);\n}\nconst now = new Date();\nconst result = [];\nfor (const [whatsapp, items] of Object.entries(groups)) {\n  items.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));\n  const last = items[items.length - 1];\n  const lastTs = new Date(last.timestamp);\n  const diffSec = (now - lastTs) / 1000;\n  if (diffSec < windowSec) continue;\n  const combined = items.map(i => i.text).filter(Boolean).join('\\n');\n  const imageItems = items.filter(i => (i.media_id && String(i.media_mime || '').startsWith('image')));\n  const batchId = `B${Date.now()}_${Math.floor(Math.random() * 1000)}`;\n  result.push({ json: {\n    whatsapp,\n    combined_text: combined,\n    messages: items,\n    has_image: imageItems.length > 0,\n    image_ids: imageItems.map(i => i.media_id),\n    latest_timestamp: last.timestamp,\n    batch_id: batchId,\n    pending_message_ids: items.map(i => i.message_id),\n    is_owner: whatsapp === ($env.OWNER_WHATSAPP || '')\n  } });\n}\nreturn result;"
       }
     },
     {
@@ -223,7 +224,7 @@
       "parameters": {
         "operation": "read",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "pagos!A:I",
+        "range": "pagos!A:L",
         "returnAll": true
       }
     },
@@ -377,7 +378,7 @@
       "parameters": {
         "operation": "update",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "pagos!A:I",
+        "range": "pagos!A:L",
         "dataMode": "autoMapInputData",
         "key": "pago_id",
         "valueInputMode": "USER_ENTERED"
@@ -412,7 +413,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const statusOk = !$json.error;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: '',\n  whatsapp: $node['Admin: Preparar accion'].json.phone || '',\n  tipo_mensaje: 'ADMIN',\n  resumen: String($node['Admin: Preparar accion'].json.messageToSend || '').slice(0, 120),\n  message_key: `ADMIN_${$node['Admin: Preparar accion'].json.batch_id}` ,\n  status_envio: statusOk ? 'OK' : 'ERROR',\n  error_envio: statusOk ? '' : String($json.error || '')\n} }];"
+        "code": "const statusOk = !$json.error;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: '',\n  whatsapp: $node['Admin: Preparar accion'].json.phone || '',\n  tipo_mensaje: 'ADMIN',\n  resumen: String($node['Admin: Preparar accion'].json.messageToSend || '').slice(0, 120),\n  message_key: `ADMIN_${$node['Admin: Preparar accion'].json.batch_id}` ,\n  status_envio: statusOk ? 'OK' : 'ERROR',\n  error_envio: statusOk ? '' : String($json.error || ''),\n  message_id: ''\n} }];"
       }
     },
     {
@@ -427,7 +428,7 @@
       "parameters": {
         "operation": "append",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "mensajes_log!A:H",
+        "range": "mensajes_log!A:I",
         "dataMode": "autoMapInputData",
         "valueInputMode": "USER_ENTERED"
       }
@@ -459,7 +460,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const inputPhone = $json.whatsapp || '';\nconst normalize = (value) => `+${String(value || '').replace(/\\D/g, '')}`;\nconst rows = $input.all().map(i => i.json);\nconst match = rows.find(row => normalize(row.whatsapp || row.phone || '') === normalize(inputPhone));\nreturn [{ json: { phone: inputPhone, cliente: match || null, combined_text: $node['Agrupar y debounce'].json.combined_text, has_image: $node['Agrupar y debounce'].json.has_image, image_ids: $node['Agrupar y debounce'].json.image_ids, batch_id: $node['Agrupar y debounce'].json.batch_id, pending_timestamps: $node['Agrupar y debounce'].json.pending_timestamps } }];"
+        "code": "const inputPhone = $json.whatsapp || '';\nconst normalize = (value) => `+${String(value || '').replace(/\\D/g, '')}`;\nconst rows = $input.all().map(i => i.json);\nconst match = rows.find(row => normalize(row.whatsapp || row.phone || '') === normalize(inputPhone));\nreturn [{ json: { phone: inputPhone, cliente: match || null, combined_text: $node['Agrupar y debounce'].json.combined_text, has_image: $node['Agrupar y debounce'].json.has_image, image_ids: $node['Agrupar y debounce'].json.image_ids, batch_id: $node['Agrupar y debounce'].json.batch_id, pending_message_ids: $node['Agrupar y debounce'].json.pending_message_ids } }];"
       }
     },
     {
@@ -535,7 +536,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const resumen = String($json.mensaje_final || '').slice(0, 120);\nconst statusOk = !$json.error;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: '',\n  whatsapp: $node['Buscar cliente'].json.phone || '',\n  tipo_mensaje: $json.tipo_mensaje || 'NUEVO_CLIENTE',\n  resumen,\n  message_key: `INBOUND_${$node['Buscar cliente'].json.batch_id}` ,\n  status_envio: statusOk ? 'OK' : 'ERROR',\n  error_envio: statusOk ? '' : String($json.error || '')\n} }];"
+        "code": "const resumen = String($json.mensaje_final || '').slice(0, 120);\nconst statusOk = !$json.error;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: '',\n  whatsapp: $node['Buscar cliente'].json.phone || '',\n  tipo_mensaje: $json.tipo_mensaje || 'NUEVO_CLIENTE',\n  resumen,\n  message_key: `INBOUND_${$node['Buscar cliente'].json.batch_id}` ,\n  status_envio: statusOk ? 'OK' : 'ERROR',\n  error_envio: statusOk ? '' : String($json.error || ''),\n  message_id: $node['Buscar cliente'].json.pending_message_ids?.[0] || ''\n} }];"
       }
     },
     {
@@ -550,7 +551,7 @@
       "parameters": {
         "operation": "append",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "mensajes_log!A:H",
+        "range": "mensajes_log!A:I",
         "dataMode": "autoMapInputData",
         "valueInputMode": "USER_ENTERED"
       }
@@ -567,8 +568,9 @@
       "parameters": {
         "operation": "read",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "mensajes_log!A:H",
-        "returnAll": true
+        "range": "mensajes_log!A:I",
+        "returnAll": false,
+        "limit": 200
       }
     },
     {
@@ -582,7 +584,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const logs = $input.all().map(i => i.json);\nconst cliente = $node['Buscar cliente'].json.cliente;\nconst clienteId = cliente?.cliente_id || '';\nconst recent = logs.filter(l => String(l.cliente_id || '') === String(clienteId)).slice(-10);\nconst contexto = recent.map(l => `\u2022 ${l.tipo_mensaje}: ${l.resumen}`).join('\\n');\nreturn [{ json: {\n  cliente,\n  contexto,\n  combined_text: $node['Buscar cliente'].json.combined_text,\n  has_image: $node['Buscar cliente'].json.has_image,\n  image_ids: $node['Buscar cliente'].json.image_ids,\n  batch_id: $node['Buscar cliente'].json.batch_id,\n  phone: $node['Buscar cliente'].json.phone,\n  pending_timestamps: $node['Buscar cliente'].json.pending_timestamps\n} }];"
+        "code": "const logs = $input.all().map(i => i.json);\nconst cliente = $node['Buscar cliente'].json.cliente;\nconst clienteId = cliente?.cliente_id || '';\nconst recent = logs.filter(l => String(l.cliente_id || '') === String(clienteId)).slice(-10);\nconst contexto = recent.map(l => `\u2022 ${l.tipo_mensaje}: ${l.resumen}`).join('\\n');\nreturn [{ json: {\n  cliente,\n  contexto,\n  combined_text: $node['Buscar cliente'].json.combined_text,\n  has_image: $node['Buscar cliente'].json.has_image,\n  image_ids: $node['Buscar cliente'].json.image_ids,\n  batch_id: $node['Buscar cliente'].json.batch_id,\n  phone: $node['Buscar cliente'].json.phone,\n  pending_message_ids: $node['Buscar cliente'].json.pending_message_ids\n} }];"
       }
     },
     {
@@ -600,7 +602,7 @@
         "url": "https://api.openai.com/v1/responses",
         "jsonParameters": true,
         "headerParametersJson": "={{JSON.stringify({Authorization: 'Bearer ' + $env.OPENAI_API_KEY})}}",
-        "bodyParametersJson": "={{JSON.stringify({ model: $env.OPENAI_MODEL_TEXT, input: [ { role: 'system', content: 'Eres asistente de cobros y atenci\u00f3n. Responde corto, claro, cordial. No inventes pagos. Si falta info, pregunta. No cambies de tema. Si el usuario env\u00eda varios mensajes unidos, resp\u00f3ndelos juntos.' }, { role: 'user', content: `Contexto reciente:\n${$node['Construir contexto'].json.contexto}\n\nMensaje:\n${$node['Construir contexto'].json.combined_text}` } ] })}}"
+        "bodyParametersJson": "={{JSON.stringify({ model: $env.OPENAI_MODEL_TEXT, input: [ { role: 'system', content: 'Eres un asistente de cobros y soporte de planes. No inventes pagos ni datos. Responde solo sobre cobros, pagos, soporte, planes y facturaci\u00f3n. Si falta informaci\u00f3n, pide datos concretos. Si detectas intenci\u00f3n de pago, gu\u00eda a enviar captura o datos (monto, fecha, banco, referencia). Responde breve, humano y en un solo mensaje, incluyendo todo cuando haya varios mensajes unidos.' }, { role: 'user', content: `Contexto reciente:\n${$node['Construir contexto'].json.contexto}\n\nMensaje:\n${$node['Construir contexto'].json.combined_text}` } ] })}}"
       }
     },
     {
@@ -614,7 +616,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const output = $json.output || [];\nconst text = output?.[0]?.content?.[0]?.text || $json.response?.[0]?.text || '\u00bfMe puedes dar m\u00e1s detalles?';\nreturn [{ json: {\n  cliente: $node['Construir contexto'].json.cliente,\n  phone: $node['Construir contexto'].json.phone,\n  combined_text: $node['Construir contexto'].json.combined_text,\n  has_image: $node['Construir contexto'].json.has_image,\n  image_ids: $node['Construir contexto'].json.image_ids,\n  batch_id: $node['Construir contexto'].json.batch_id,\n  pending_timestamps: $node['Construir contexto'].json.pending_timestamps,\n  ai_text: String(text || '').trim()\n} }];"
+        "code": "const output = $json.output || [];\nconst text = output?.[0]?.content?.[0]?.text || $json.response?.[0]?.text || '\u00bfMe puedes dar m\u00e1s detalles?';\nreturn [{ json: {\n  cliente: $node['Construir contexto'].json.cliente,\n  phone: $node['Construir contexto'].json.phone,\n  combined_text: $node['Construir contexto'].json.combined_text,\n  has_image: $node['Construir contexto'].json.has_image,\n  image_ids: $node['Construir contexto'].json.image_ids,\n  batch_id: $node['Construir contexto'].json.batch_id,\n  pending_message_ids: $node['Construir contexto'].json.pending_message_ids,\n  ai_text: String(text || '').trim()\n} }];"
       }
     },
     {
@@ -686,7 +688,7 @@
         "url": "https://api.openai.com/v1/responses",
         "jsonParameters": true,
         "headerParametersJson": "={{JSON.stringify({Authorization: 'Bearer ' + $env.OPENAI_API_KEY})}}",
-        "bodyParametersJson": "={{JSON.stringify({ model: $env.OPENAI_MODEL_VISION, input: [ { role: 'system', content: 'Eres un analista de comprobantes. Devuelve SOLO JSON estricto sin texto extra.' }, { role: 'user', content: [ { type: 'input_text', text: 'Extrae: monto, moneda, fecha, hora, referencia, entidad, titular, concepto, confidence_0_100, notas. Responde JSON estricto.' }, { type: 'input_image', image_url: $node['Obtener media info'].json.url } ] } ] })}}"
+        "bodyParametersJson": "={{JSON.stringify({ model: $env.OPENAI_MODEL_VISION, input: [ { role: 'system', content: 'Eres un analista de comprobantes. Responde SOLO JSON estricto, sin texto extra.' }, { role: 'user', content: [ { type: 'input_text', text: 'Extrae EXACTAMENTE estos campos: monto, moneda, fecha, hora, referencia, entidad, titular, concepto, confidence_0_100, notas. Responde JSON estricto.' }, { type: 'input_image', image_url: $node['Convertir media base64'].json.image_data_url } ] } ] })}}"
       }
     },
     {
@@ -700,7 +702,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const cliente = $node['Extraer respuesta texto'].json.cliente;\nlet parsed = null;\ntry {\n  const raw = $json.output?.[0]?.content?.[0]?.text || '';\n  parsed = JSON.parse(raw);\n} catch (e) {\n  parsed = null;\n}\nconst monto = Number(parsed?.monto || 0);\nconst mensual = Number(cliente?.monto_mensual || 0);\nconst diff = mensual ? Math.abs(monto - mensual) / mensual : 1;\nconst confidence = Number(parsed?.confidence_0_100 || 0);\nconst ok = confidence >= 80 && diff <= 0.05;\nreturn [{ json: {\n  cliente,\n  parsed,\n  ok,\n  confidence,\n  phone: $node['Extraer respuesta texto'].json.phone,\n  batch_id: $node['Extraer respuesta texto'].json.batch_id,\n  pending_timestamps: $node['Extraer respuesta texto'].json.pending_timestamps,\n  ai_text: $node['Extraer respuesta texto'].json.ai_text\n} }];"
+        "code": "const cliente = $node['Extraer respuesta texto'].json.cliente;\nlet parsed = null;\nlet parseError = '';\ntry {\n  const raw = $json.output?.[0]?.content?.[0]?.text || '';\n  parsed = JSON.parse(raw);\n} catch (e) {\n  parseError = String(e.message || e);\n  parsed = null;\n}\nconst confidence = Number(parsed?.confidence_0_100 || 0);\nconst monto = Number(parsed?.monto || 0);\nconst mensual = Number(cliente?.monto_mensual || 0);\nconst montoVariable = String(cliente?.monto_variable || '').toUpperCase() === 'SI';\nconst diff = mensual ? Math.abs(monto - mensual) / mensual : 1;\nconst parseDate = (value) => {\n  if (!value) return null;\n  if (typeof value === 'number') {\n    const utc = Math.round((value - 25569) * 86400 * 1000);\n    return new Date(utc);\n  }\n  const parsedDate = new Date(value);\n  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;\n};\nconst pagoDate = parseDate(parsed?.fecha);\nlet dateOk = false;\nif (pagoDate) {\n  const now = new Date();\n  const diffDays = Math.floor((now - pagoDate) / 86400000);\n  dateOk = diffDays >= 0 && diffDays <= 7;\n}\nconst pagos = $items('Leer pagos recientes').map(i => i.json);\nconst referencia = String(parsed?.referencia || '').trim();\nconst clienteId = String(cliente?.cliente_id || '');\nconst duplicateRef = referencia && pagos.some(p => String(p.referencia || '').trim() === referencia && String(p.cliente_id || '') === clienteId);\nconst montoOk = !montoVariable && mensual > 0 && diff <= 0.05;\nconst ok = !parseError && parsed && confidence >= 80 && montoOk && dateOk && !duplicateRef;\nlet reason = '';\nif (!parsed || parseError) reason = 'No pude leer el comprobante.';\nelse if (confidence < 80) reason = 'La imagen no es clara.';\nelse if (montoVariable || mensual <= 0) reason = 'Monto variable, necesito confirmaci\u00f3n.';\nelse if (!montoOk) reason = 'El monto no coincide con tu plan.';\nelse if (!dateOk) reason = 'La fecha del pago no est\u00e1 dentro de los \u00faltimos 7 d\u00edas.';\nelse if (duplicateRef) reason = 'La referencia ya existe, requiere revisi\u00f3n.';\nreturn [{ json: {\n  cliente,\n  parsed,\n  ok,\n  confidence,\n  phone: $node['Extraer respuesta texto'].json.phone,\n  batch_id: $node['Extraer respuesta texto'].json.batch_id,\n  pending_message_ids: $node['Extraer respuesta texto'].json.pending_message_ids,\n  ai_text: $node['Extraer respuesta texto'].json.ai_text,\n  duplicateRef,\n  reason,\n  owner_review: duplicateRef,\n  owner_message: duplicateRef ? `Pago sospechoso: referencia duplicada\nCliente: ${cliente?.nombre || ''} (${cliente?.cliente_id || ''})\nReferencia: ${referencia}` : ''\n} }];"
       }
     },
     {
@@ -734,7 +736,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const parsed = $json.parsed || {};\nconst pagoId = `P${Date.now()}`;\nconst resumenOwner = `Pago detectado \u2705\nCliente: ${$json.cliente?.nombre || ''} (${ $json.cliente?.cliente_id || ''})\nMonto: ${parsed.monto || ''} ${parsed.moneda || ''}\nFecha: ${parsed.fecha || ''} ${parsed.hora || ''}\nReferencia: ${parsed.referencia || ''}\nCONFIRMAR PAGO ${pagoId}\nRECHAZAR PAGO ${pagoId}`;\nreturn [{ json: {\n  pago: {\n    pago_id: pagoId,\n    cliente_id: $json.cliente?.cliente_id || '',\n    fecha_pago: parsed.fecha || new Date().toISOString().slice(0, 10),\n    monto: parsed.monto || '',\n    metodo: parsed.entidad || '',\n    referencia: parsed.referencia || '',\n    validado_por: '',\n    nota: 'PENDIENTE_CONFIRMACION',\n    confidence: String($json.confidence || '')\n  },\n  owner_message: resumenOwner,\n  client_message: 'Recib\u00ed tu comprobante \u2705. Estoy verific\u00e1ndolo y te confirmo en breve.'\n} }];"
+        "code": "const parsed = $json.parsed || {};\nconst pagoId = `P${Date.now()}`;\nconst resumenOwner = `Pago detectado \u2705\nCliente: ${$json.cliente?.nombre || ''} (${ $json.cliente?.cliente_id || ''})\nMonto: ${parsed.monto || ''} ${parsed.moneda || ''}\nFecha: ${parsed.fecha || ''} ${parsed.hora || ''}\nReferencia: ${parsed.referencia || ''}\nBanco/Entidad: ${parsed.entidad || ''}\nCONFIRMAR PAGO ${pagoId}\nRECHAZAR PAGO ${pagoId}`;\nreturn [{ json: {\n  pago: {\n    pago_id: pagoId,\n    cliente_id: $json.cliente?.cliente_id || '',\n    fecha_pago: parsed.fecha || new Date().toISOString().slice(0, 10),\n    monto: parsed.monto || '',\n    moneda: parsed.moneda || '',\n    metodo: parsed.entidad || '',\n    referencia: parsed.referencia || '',\n    banco: parsed.entidad || '',\n    titular: parsed.titular || '',\n    concepto: parsed.concepto || '',\n    validado_por: '',\n    nota: 'PENDIENTE_CONFIRMACION',\n    confidence: String($json.confidence || '')\n  },\n  owner_message: resumenOwner,\n  client_message: 'Recib\u00ed tu comprobante \u2705. Estoy verific\u00e1ndolo y te confirmo en breve.'\n} }];"
       }
     },
     {
@@ -752,39 +754,55 @@
           "string": [
             {
               "name": "pago_id",
-              "value": "={{$node['Preparar pago pendiente'].json.pago.pago_id}}"
+              "value": "={{$json.pago.pago_id}}"
             },
             {
               "name": "cliente_id",
-              "value": "={{$node['Preparar pago pendiente'].json.pago.cliente_id}}"
+              "value": "={{$json.pago.cliente_id}}"
             },
             {
               "name": "fecha_pago",
-              "value": "={{$node['Preparar pago pendiente'].json.pago.fecha_pago}}"
+              "value": "={{$json.pago.fecha_pago}}"
             },
             {
               "name": "monto",
-              "value": "={{$node['Preparar pago pendiente'].json.pago.monto}}"
+              "value": "={{$json.pago.monto}}"
+            },
+            {
+              "name": "moneda",
+              "value": "={{$json.pago.moneda}}"
             },
             {
               "name": "metodo",
-              "value": "={{$node['Preparar pago pendiente'].json.pago.metodo}}"
+              "value": "={{$json.pago.metodo}}"
             },
             {
               "name": "referencia",
-              "value": "={{$node['Preparar pago pendiente'].json.pago.referencia}}"
+              "value": "={{$json.pago.referencia}}"
             },
             {
-              "name": "validado_por",
-              "value": "={{$node['Preparar pago pendiente'].json.pago.validado_por}}"
+              "name": "banco",
+              "value": "={{$json.pago.banco}}"
             },
             {
-              "name": "nota",
-              "value": "={{$node['Preparar pago pendiente'].json.pago.nota}}"
+              "name": "titular",
+              "value": "={{$json.pago.titular}}"
+            },
+            {
+              "name": "concepto",
+              "value": "={{$json.pago.concepto}}"
             },
             {
               "name": "confidence",
-              "value": "={{$node['Preparar pago pendiente'].json.pago.confidence}}"
+              "value": "={{$json.pago.confidence}}"
+            },
+            {
+              "name": "nota",
+              "value": "={{$json.pago.nota}}"
+            },
+            {
+              "name": "validado_por",
+              "value": "={{$json.pago.validado_por}}"
             }
           ]
         }
@@ -802,7 +820,7 @@
       "parameters": {
         "operation": "append",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "pagos!A:I",
+        "range": "pagos!A:L",
         "dataMode": "autoMapInputData",
         "valueInputMode": "USER_ENTERED"
       }
@@ -863,7 +881,7 @@
           "string": [
             {
               "name": "mensaje_final",
-              "value": "Gracias. Para validar necesito: monto, fecha, banco y referencia del pago."
+              "value": "={{`No pude validar el comprobante. ${$json.reason || ''} Por favor env\u00eda nuevamente la captura o comparte estos datos: monto, fecha, banco y referencia.`}}"
             },
             {
               "name": "tipo_mensaje",
@@ -926,7 +944,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const statusOk = !$json.error;\nconst cliente = $node['Extraer respuesta texto'].json.cliente;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: cliente?.cliente_id || '',\n  whatsapp: $node['Extraer respuesta texto'].json.phone || '',\n  tipo_mensaje: $json.tipo_mensaje || 'RESPUESTA',\n  resumen: String($json.mensaje_final || '').slice(0, 120),\n  message_key: `OUT_${$node['Extraer respuesta texto'].json.batch_id}` ,\n  status_envio: statusOk ? 'OK' : 'ERROR',\n  error_envio: statusOk ? '' : String($json.error || '')\n} }];"
+        "code": "const statusOk = !$json.error;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: $json.cliente_id || '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: $json.tipo_mensaje || '',\n  resumen: String($json.mensaje_final || '').slice(0, 120),\n  message_key: $json.message_key || '',\n  status_envio: statusOk ? 'OK' : 'ERROR',\n  error_envio: statusOk ? '' : String($json.error || ''),\n  message_id: $node['Extraer respuesta texto']?.json?.pending_message_ids?.[0] || ''\n} }];"
       }
     },
     {
@@ -941,7 +959,7 @@
       "parameters": {
         "operation": "append",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "mensajes_log!A:H",
+        "range": "mensajes_log!A:I",
         "dataMode": "autoMapInputData",
         "valueInputMode": "USER_ENTERED"
       }
@@ -1000,7 +1018,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const timestamps = $node['Extraer respuesta texto'].json.pending_timestamps || [];\nconst batchId = $node['Extraer respuesta texto'].json.batch_id || '';\nreturn timestamps.map(ts => ({ json: { timestamp: ts, status: 'DONE', batch_id: batchId } }));"
+        "code": "const messageIds = $node['Extraer respuesta texto'].json.pending_message_ids || [];\nconst batchId = $node['Extraer respuesta texto'].json.batch_id || '';\nreturn messageIds.map(id => ({ json: { message_id: id, status: 'DONE', batch_id: batchId } }));"
       }
     },
     {
@@ -1015,9 +1033,9 @@
       "parameters": {
         "operation": "update",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "inbox_buffer!A:I",
+        "range": "inbox_buffer!A:J",
         "dataMode": "autoMapInputData",
-        "key": "timestamp",
+        "key": "message_id",
         "valueInputMode": "USER_ENTERED"
       }
     },
@@ -1032,7 +1050,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const timestamps = $node['Agrupar y debounce'].json.pending_timestamps || [];\\nconst batchId = $node['Agrupar y debounce'].json.batch_id || '';\\nreturn timestamps.map(ts => ({ json: { timestamp: ts, status: 'DONE', batch_id: batchId } }));"
+        "code": "const messageIds = $node['Agrupar y debounce'].json.pending_message_ids || [];\nconst batchId = $node['Agrupar y debounce'].json.batch_id || '';\nreturn messageIds.map(id => ({ json: { message_id: id, status: 'DONE', batch_id: batchId } }));"
       }
     },
     {
@@ -1047,9 +1065,9 @@
       "parameters": {
         "operation": "update",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "inbox_buffer!A:I",
+        "range": "inbox_buffer!A:J",
         "dataMode": "autoMapInputData",
-        "key": "timestamp",
+        "key": "message_id",
         "valueInputMode": "USER_ENTERED"
       }
     },
@@ -1115,8 +1133,9 @@
       "parameters": {
         "operation": "read",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "mensajes_log!A:H",
-        "returnAll": true
+        "range": "mensajes_log!A:I",
+        "returnAll": false,
+        "limit": 200
       }
     },
     {
@@ -1176,7 +1195,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const statusOk = !$json.error;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: $json.cliente_id || '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: $json.tipo_mensaje || '',\n  resumen: String($json.mensaje_final || '').slice(0, 120),\n  message_key: $json.message_key || '',\n  status_envio: statusOk ? 'OK' : 'ERROR',\n  error_envio: statusOk ? '' : String($json.error || '')\n} }];"
+        "code": "const statusOk = !$json.error;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: $json.cliente_id || '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: $json.tipo_mensaje || '',\n  resumen: String($json.mensaje_final || '').slice(0, 120),\n  message_key: $json.message_key || '',\n  status_envio: statusOk ? 'OK' : 'ERROR',\n  error_envio: statusOk ? '' : String($json.error || ''),\n  message_id: ''\n} }];"
       }
     },
     {
@@ -1191,7 +1210,7 @@
       "parameters": {
         "operation": "append",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "mensajes_log!A:H",
+        "range": "mensajes_log!A:I",
         "dataMode": "autoMapInputData",
         "valueInputMode": "USER_ENTERED"
       }
@@ -1320,7 +1339,7 @@
       ],
       "parameters": {
         "language": "javascript",
-        "code": "const statusOk = !$json.error;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: '',\n  whatsapp: $env.OWNER_WHATSAPP || '',\n  tipo_mensaje: 'REPORTE',\n  resumen: String($json.mensaje_final || '').slice(0, 120),\n  message_key: `REPORTE_${new Date().toISOString().slice(0, 10)}`,\n  status_envio: statusOk ? 'OK' : 'ERROR',\n  error_envio: statusOk ? '' : String($json.error || '')\n} }];"
+        "code": "const statusOk = !$json.error;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: '',\n  whatsapp: $env.OWNER_WHATSAPP || '',\n  tipo_mensaje: 'REPORTE',\n  resumen: String($json.mensaje_final || '').slice(0, 120),\n  message_key: `REPORTE_${new Date().toISOString().slice(0, 10)}`,\n  status_envio: statusOk ? 'OK' : 'ERROR',\n  error_envio: statusOk ? '' : String($json.error || ''),\n  message_id: ''\n} }];"
       }
     },
     {
@@ -1335,9 +1354,418 @@
       "parameters": {
         "operation": "append",
         "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
-        "range": "mensajes_log!A:H",
+        "range": "mensajes_log!A:I",
         "dataMode": "autoMapInputData",
         "valueInputMode": "USER_ENTERED"
+      }
+    },
+    {
+      "id": "96",
+      "name": "Schema requerido (Sheets)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -220
+      ],
+      "parameters": {
+        "content": "Requiere hojas y columnas (encabezados):\n\nclientes: cliente_id, nombre, whatsapp, estado, monto_mensual, plan, dia_pago, proximo_vencimiento, fecha_ultimo_pago, link_pago, consentimiento_mensajes, monto_variable\n\npagos: pago_id, cliente_id, fecha_pago, monto, moneda, metodo, referencia, banco, titular, concepto, confidence, nota, validado_por\n\ninbox_buffer: message_id, whatsapp, timestamp, message_type, text, media_id, media_mime, media_url, status, batch_id\n\nmensajes_log: timestamp, cliente_id, whatsapp, tipo_mensaje, resumen, message_key, status_envio, error_envio, message_id\n\nPerformance: los nodos leen rangos acotados (limit). Si el volumen crece, mover inbox_buffer/mensajes_log a Firestore o a una hoja dedicada por status para evitar lecturas grandes.\nNota: la detecci\u00f3n de duplicados usa lecturas recientes (limit). Para historial completo, migrar pagos a base de datos/Firestore o usar consultas filtradas."
+      }
+    },
+    {
+      "id": "97",
+      "name": "Config env vars",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        -20
+      ],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "ORIGIN_SECRET",
+              "value": "={{$env.ORIGIN_SECRET}}"
+            },
+            {
+              "name": "OWNER_WHATSAPP",
+              "value": "={{$env.OWNER_WHATSAPP}}"
+            },
+            {
+              "name": "WHATSAPP_TOKEN",
+              "value": "={{$env.WHATSAPP_TOKEN}}"
+            },
+            {
+              "name": "WHATSAPP_API_URL",
+              "value": "={{$env.WHATSAPP_API_URL}}"
+            },
+            {
+              "name": "WHATSAPP_GRAPH_URL",
+              "value": "={{$env.WHATSAPP_GRAPH_URL}}"
+            },
+            {
+              "name": "GOOGLE_SHEETS_ID",
+              "value": "={{$env.GOOGLE_SHEETS_ID}}"
+            },
+            {
+              "name": "TIMEZONE",
+              "value": "={{$env.TIMEZONE}}"
+            },
+            {
+              "name": "OPENAI_API_KEY",
+              "value": "={{$env.OPENAI_API_KEY}}"
+            },
+            {
+              "name": "OPENAI_MODEL_TEXT",
+              "value": "={{$env.OPENAI_MODEL_TEXT}}"
+            },
+            {
+              "name": "OPENAI_MODEL_VISION",
+              "value": "={{$env.OPENAI_MODEL_VISION}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "98",
+      "name": "Dedupe: Leer inbox_buffer reciente",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        720,
+        -60
+      ],
+      "parameters": {
+        "operation": "read",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "inbox_buffer!A:J",
+        "returnAll": false,
+        "limit": 500
+      }
+    },
+    {
+      "id": "99",
+      "name": "Dedupe: Leer mensajes_log reciente",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        960,
+        -60
+      ],
+      "parameters": {
+        "operation": "read",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "mensajes_log!A:I",
+        "returnAll": false,
+        "limit": 300
+      }
+    },
+    {
+      "id": "100",
+      "name": "Dedupe: Evaluar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -60
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const messageId = $node['Normalizar y validar'].json.message_id;\nconst inbox = $items('Dedupe: Leer inbox_buffer reciente').map(i => i.json);\nconst logs = $items('Dedupe: Leer mensajes_log reciente').map(i => i.json);\nconst inInbox = inbox.some(r => String(r.message_id || '').trim() === String(messageId || '').trim());\nconst inLogs = logs.some(r => String(r.message_id || '').trim() === String(messageId || '').trim());\nreturn [{ json: { message_id: messageId, is_duplicate: inInbox || inLogs } }];"
+      }
+    },
+    {
+      "id": "101",
+      "name": "Mensaje duplicado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        -60
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.is_duplicate}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "102",
+      "name": "Convertir media base64",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        460
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const binary = $binary.data;\nif (!binary || !binary.data) {\n  throw new Error('Media binaria no disponible');\n}\nconst mime = binary.mimeType || 'image/jpeg';\nconst base64 = binary.data;\nreturn [{ json: { image_data_url: `data:${mime};base64,${base64}`, mime } }];"
+      }
+    },
+    {
+      "id": "103",
+      "name": "Leer pagos recientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1680,
+        620
+      ],
+      "parameters": {
+        "operation": "read",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "pagos!A:L",
+        "returnAll": false,
+        "limit": 300
+      }
+    },
+    {
+      "id": "104",
+      "name": "Detectar BAJA/STOP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        460
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const text = String($node['Buscar cliente'].json.combined_text || '').toUpperCase();\nconst match = ['STOP','BAJA','CANCELAR'].some(k => text.includes(k));\nconst cliente = $node['Buscar cliente'].json.cliente;\nreturn [{ json: { optout: match, cliente, phone: $node['Buscar cliente'].json.phone, batch_id: $node['Buscar cliente'].json.batch_id, pending_message_ids: $node['Buscar cliente'].json.pending_message_ids } }];"
+      }
+    },
+    {
+      "id": "105",
+      "name": "Es baja?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        460
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.optout}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "106",
+      "name": "Baja: Datos cliente",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        360
+      ],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "cliente_id",
+              "value": "={{$json.cliente?.cliente_id || ''}}"
+            },
+            {
+              "name": "consentimiento_mensajes",
+              "value": "NO"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "107",
+      "name": "Baja: Actualizar cliente",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1920,
+        360
+      ],
+      "parameters": {
+        "operation": "update",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "clientes!A:Z",
+        "dataMode": "autoMapInputData",
+        "key": "cliente_id",
+        "valueInputMode": "USER_ENTERED"
+      }
+    },
+    {
+      "id": "108",
+      "name": "Mensaje BAJA",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        360
+      ],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "mensaje_final",
+              "value": "Tu solicitud de baja fue registrada. No te enviaremos m\u00e1s recordatorios. Si deseas reactivar, escr\u00edbenos."
+            },
+            {
+              "name": "tipo_mensaje",
+              "value": "BAJA"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "109",
+      "name": "Enviar WhatsApp baja",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2400,
+        360
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "jsonParameters": true,
+        "headerParametersJson": "={{JSON.stringify({Authorization: 'Bearer ' + $env.WHATSAPP_TOKEN})}}",
+        "bodyParametersJson": "={{JSON.stringify({ to: $node['Detectar BAJA/STOP'].json.phone, type: 'text', text: { body: $json.mensaje_final } })}}"
+      }
+    },
+    {
+      "id": "110",
+      "name": "Log mensaje BAJA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        360
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const statusOk = !$json.error;\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: $node['Detectar BAJA/STOP'].json.cliente?.cliente_id || '',\n  whatsapp: $node['Detectar BAJA/STOP'].json.phone || '',\n  tipo_mensaje: 'BAJA',\n  resumen: 'Baja confirmada',\n  message_key: `BAJA_${$node['Detectar BAJA/STOP'].json.batch_id}` ,\n  status_envio: statusOk ? 'OK' : 'ERROR',\n  error_envio: statusOk ? '' : String($json.error || ''),\n  message_id: $node['Detectar BAJA/STOP'].json.pending_message_ids?.[0] || ''\n} }];"
+      }
+    },
+    {
+      "id": "111",
+      "name": "Append log BAJA",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        2880,
+        360
+      ],
+      "parameters": {
+        "operation": "append",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "mensajes_log!A:I",
+        "dataMode": "autoMapInputData",
+        "valueInputMode": "USER_ENTERED"
+      }
+    },
+    {
+      "id": "112",
+      "name": "BAJA: Marcar buffer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        360
+      ],
+      "parameters": {
+        "language": "javascript",
+        "code": "const messageIds = $node['Detectar BAJA/STOP'].json.pending_message_ids || [];\nconst batchId = $node['Detectar BAJA/STOP'].json.batch_id || '';\nreturn messageIds.map(id => ({ json: { message_id: id, status: 'DONE', batch_id: batchId } }));"
+      }
+    },
+    {
+      "id": "113",
+      "name": "BAJA: Actualizar inbox_buffer",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        3360,
+        360
+      ],
+      "parameters": {
+        "operation": "update",
+        "sheetId": "={{$env.GOOGLE_SHEETS_ID}}",
+        "range": "inbox_buffer!A:J",
+        "dataMode": "autoMapInputData",
+        "key": "message_id",
+        "valueInputMode": "USER_ENTERED"
+      }
+    },
+    {
+      "id": "114",
+      "name": "Requiere revision owner?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        620
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.owner_review}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "115",
+      "name": "Enviar owner revision",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2400,
+        620
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "jsonParameters": true,
+        "headerParametersJson": "={{JSON.stringify({Authorization: 'Bearer ' + $env.WHATSAPP_TOKEN})}}",
+        "bodyParametersJson": "={{JSON.stringify({ to: $env.OWNER_WHATSAPP, type: 'text', text: { body: $json.owner_message || 'Pago sospechoso, revisar.' } })}}"
+      }
+    },
+    {
+      "id": "116",
+      "name": "Baja: Cliente existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        480
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$node['Detectar BAJA/STOP'].json.cliente !== null}}",
+              "operation": "isTrue"
+            }
+          ]
+        }
       }
     }
   ],
@@ -1368,7 +1796,7 @@
       "main": [
         [
           {
-            "node": "Preparar buffer",
+            "node": "Dedupe: Leer inbox_buffer reciente",
             "type": "main",
             "index": 0
           }
@@ -1616,7 +2044,7 @@
       "main": [
         [
           {
-            "node": "Cliente existe?",
+            "node": "Detectar BAJA/STOP",
             "type": "main",
             "index": 0
           }
@@ -1751,7 +2179,7 @@
       "main": [
         [
           {
-            "node": "OpenAI vision",
+            "node": "Convertir media base64",
             "type": "main",
             "index": 0
           }
@@ -1762,7 +2190,7 @@
       "main": [
         [
           {
-            "node": "Evaluar comprobante",
+            "node": "Leer pagos recientes",
             "type": "main",
             "index": 0
           }
@@ -1791,7 +2219,7 @@
         ],
         [
           {
-            "node": "Mensaje cliente pedir datos",
+            "node": "Requiere revision owner?",
             "type": "main",
             "index": 0
           }
@@ -2122,6 +2550,232 @@
         [
           {
             "node": "Admin: Actualizar inbox_buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedupe: Leer inbox_buffer reciente": {
+      "main": [
+        [
+          {
+            "node": "Dedupe: Leer mensajes_log reciente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedupe: Leer mensajes_log reciente": {
+      "main": [
+        [
+          {
+            "node": "Dedupe: Evaluar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedupe: Evaluar": {
+      "main": [
+        [
+          {
+            "node": "Mensaje duplicado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje duplicado?": {
+      "main": [
+        [
+          {
+            "node": "Responder ok",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convertir media base64": {
+      "main": [
+        [
+          {
+            "node": "OpenAI vision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer pagos recientes": {
+      "main": [
+        [
+          {
+            "node": "Evaluar comprobante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar BAJA/STOP": {
+      "main": [
+        [
+          {
+            "node": "Es baja?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es baja?": {
+      "main": [
+        [
+          {
+            "node": "Baja: Cliente existe?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cliente existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baja: Datos cliente": {
+      "main": [
+        [
+          {
+            "node": "Baja: Actualizar cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baja: Actualizar cliente": {
+      "main": [
+        [
+          {
+            "node": "Mensaje BAJA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje BAJA": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp baja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar WhatsApp baja": {
+      "main": [
+        [
+          {
+            "node": "Log mensaje BAJA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log mensaje BAJA": {
+      "main": [
+        [
+          {
+            "node": "Append log BAJA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append log BAJA": {
+      "main": [
+        [
+          {
+            "node": "BAJA: Marcar buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BAJA: Marcar buffer": {
+      "main": [
+        [
+          {
+            "node": "BAJA: Actualizar inbox_buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Requiere revision owner?": {
+      "main": [
+        [
+          {
+            "node": "Enviar owner revision",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensaje cliente pedir datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar owner revision": {
+      "main": [
+        [
+          {
+            "node": "Mensaje cliente pedir datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baja: Cliente existe?": {
+      "main": [
+        [
+          {
+            "node": "Baja: Datos cliente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensaje BAJA",
             "type": "main",
             "index": 0
           }
