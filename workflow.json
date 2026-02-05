@@ -93,6 +93,10 @@
             {
               "name": "status",
               "value": "PENDING"
+            },
+            {
+              "name": "batch_id",
+              "value": ""
             }
           ]
         }
@@ -110,7 +114,7 @@
       "parameters": {
         "operation": "append",
         "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "inbox_buffer!A1:H",
+        "range": "inbox_buffer!A1:I",
         "options": {
           "valueInputMode": "USER_ENTERED"
         }
@@ -177,7 +181,7 @@
       "parameters": {
         "operation": "read",
         "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "inbox_buffer!A1:H"
+        "range": "inbox_buffer!A1:I"
       }
     },
     {
@@ -376,7 +380,7 @@
       "parameters": {
         "operation": "update",
         "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "inbox_buffer!A1:H",
+        "range": "inbox_buffer!A1:I",
         "key": "timestamp",
         "value": "={{$json.timestamp}}",
         "options": {
@@ -498,7 +502,7 @@
       "parameters": {
         "operation": "update",
         "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "inbox_buffer!A1:H",
+        "range": "inbox_buffer!A1:I",
         "key": "timestamp",
         "value": "={{$json.timestamp}}",
         "options": {
@@ -857,7 +861,7 @@
       "parameters": {
         "operation": "update",
         "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "inbox_buffer!A1:H",
+        "range": "inbox_buffer!A1:I",
         "key": "timestamp",
         "value": "={{$json.timestamp}}",
         "options": {
