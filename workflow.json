@@ -194,7 +194,7 @@
         200
       ],
       "parameters": {
-        "jsCode": "const WINDOW_SEC = Number($env.WINDOW_SEC || 12);\nconst now = Date.now();\nconst rows = items.map(i => i.json);\nconst pending = rows.filter(r => r.status === 'PENDING');\n\nconst byWhatsapp = {};\nfor (const row of pending) {\n  const wa = row.whatsapp || '';\n  if (!wa) continue;\n  if (!byWhatsapp[wa]) byWhatsapp[wa] = [];\n  byWhatsapp[wa].push(row);\n}\n\nconst output = [];\nfor (const [wa, msgs] of Object.entries(byWhatsapp)) {\n  const sorted = msgs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());\n  const last = sorted[sorted.length - 1];\n  const ageSec = (now - new Date(last.timestamp).getTime()) / 1000;\n  if (ageSec < WINDOW_SEC) continue;\n\n  const combinedText = sorted.map(m => m.text).filter(Boolean).join('\n');\n  const hasImage = sorted.some(m => (m.media_mime || '').startsWith('image/'));\n  const mediaIds = sorted.filter(m => (m.media_mime || '').startsWith('image/')).map(m => m.media_id).filter(Boolean);\n  const pendingTimestamps = sorted.map(m => m.timestamp);\n\n  output.push({\n    json: {\n      whatsapp: wa,\n      combined_text: combinedText,\n      has_image: hasImage,\n      media_ids: mediaIds,\n      pending_timestamps: pendingTimestamps,\n      last_message_at: last.timestamp,\n      batch_id: `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`\n    }\n  });\n}\n\nreturn output;"
+        "jsCode": "const WINDOW_SEC = Number($env.WINDOW_SEC || 12);\nconst now = Date.now();\nconst rows = items.map(i => i.json);\nconst pending = rows.filter(r => r.status === 'PENDING');\n\nconst byWhatsapp = {};\nfor (const row of pending) {\n  const wa = row.whatsapp || '';\n  if (!wa) continue;\n  if (!byWhatsapp[wa]) byWhatsapp[wa] = [];\n  byWhatsapp[wa].push(row);\n}\n\nconst output = [];\nfor (const [wa, msgs] of Object.entries(byWhatsapp)) {\n  const sorted = msgs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());\n  const last = sorted[sorted.length - 1];\n  const ageSec = (now - new Date(last.timestamp).getTime()) / 1000;\n  if (ageSec < WINDOW_SEC) continue;\n\n  const combinedText = sorted.map(m => m.text).filter(Boolean).join('\n');\n  const hasImage = sorted.some(m => (m.media_mime || '').startsWith('image/'));\n  const mediaIds = sorted.filter(m => (m.media_mime || '').startsWith('image/')).map(m => m.media_id).filter(Boolean);\n  const pendingTimestamps = sorted.map(m => m.timestamp);\n  const pendingMessageIds = sorted.map(m => m.message_id).filter(Boolean);\n\n  output.push({\n    json: {\n      whatsapp: wa,\n      combined_text: combinedText,\n      has_image: hasImage,\n      media_ids: mediaIds,\n      pending_timestamps: pendingTimestamps,\n      pending_message_ids: pendingMessageIds,\n      last_message_at: last.timestamp,\n      batch_id: `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`\n    }\n  });\n}\n\nreturn output;"
       }
     },
     {
@@ -381,8 +381,8 @@
         "operation": "update",
         "sheetId": "={{$env.GSHEET_ID}}",
         "range": "inbox_buffer!A1:I",
-        "key": "timestamp",
-        "value": "={{$json.timestamp}}",
+        "key": "message_id",
+        "value": "={{$json.message_id}}",
         "options": {
           "dataToSend": "autoMapInputData"
         }
@@ -503,8 +503,8 @@
         "operation": "update",
         "sheetId": "={{$env.GSHEET_ID}}",
         "range": "inbox_buffer!A1:I",
-        "key": "timestamp",
-        "value": "={{$json.timestamp}}",
+        "key": "message_id",
+        "value": "={{$json.message_id}}",
         "options": {
           "dataToSend": "autoMapInputData"
         }
@@ -862,8 +862,8 @@
         "operation": "update",
         "sheetId": "={{$env.GSHEET_ID}}",
         "range": "inbox_buffer!A1:I",
-        "key": "timestamp",
-        "value": "={{$json.timestamp}}",
+        "key": "message_id",
+        "value": "={{$json.message_id}}",
         "options": {
           "dataToSend": "autoMapInputData"
         }
@@ -1106,7 +1106,7 @@
         160
       ],
       "parameters": {
-        "jsCode": "const timestamps = Array.isArray($json.pending_timestamps) ? $json.pending_timestamps : [];\nif (!timestamps.length && $json.pending_timestamps) {\n  timestamps.push($json.pending_timestamps);\n}\nreturn timestamps.map(ts => ({ json: { timestamp: ts, status: 'DONE', batch_id: $json.batch_id || '' } }));"
+        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nif (!messageIds.length && $json.pending_timestamps) {\n  const timestamps = Array.isArray($json.pending_timestamps) ? $json.pending_timestamps : [$json.pending_timestamps];\n  const rows = $items('Read inbox_buffer').map(i => i.json);\n  const byTimestamp = new Map(rows.map(r => [r.timestamp, r.message_id]));\n  for (const ts of timestamps) {\n    const messageId = byTimestamp.get(ts);\n    if (messageId) messageIds.push(messageId);\n  }\n}\n\nif (!messageIds.length && $json.message_id) {\n  messageIds.push($json.message_id);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
       }
     },
     {
@@ -1119,7 +1119,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "const timestamps = Array.isArray($json.pending_timestamps) ? $json.pending_timestamps : [];\nif (!timestamps.length && $json.pending_timestamps) {\n  timestamps.push($json.pending_timestamps);\n}\nreturn timestamps.map(ts => ({ json: { timestamp: ts, status: 'DONE', batch_id: $json.batch_id || '' } }));"
+        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nif (!messageIds.length && $json.pending_timestamps) {\n  const timestamps = Array.isArray($json.pending_timestamps) ? $json.pending_timestamps : [$json.pending_timestamps];\n  const rows = $items('Read inbox_buffer').map(i => i.json);\n  const byTimestamp = new Map(rows.map(r => [r.timestamp, r.message_id]));\n  for (const ts of timestamps) {\n    const messageId = byTimestamp.get(ts);\n    if (messageId) messageIds.push(messageId);\n  }\n}\n\nif (!messageIds.length && $json.message_id) {\n  messageIds.push($json.message_id);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
       }
     },
     {
@@ -1132,7 +1132,7 @@
         520
       ],
       "parameters": {
-        "jsCode": "const timestamps = Array.isArray($json.pending_timestamps) ? $json.pending_timestamps : [];\nif (!timestamps.length && $json.pending_timestamps) {\n  timestamps.push($json.pending_timestamps);\n}\nreturn timestamps.map(ts => ({ json: { timestamp: ts, status: 'DONE', batch_id: $json.batch_id || '' } }));"
+        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nif (!messageIds.length && $json.pending_timestamps) {\n  const timestamps = Array.isArray($json.pending_timestamps) ? $json.pending_timestamps : [$json.pending_timestamps];\n  const rows = $items('Read inbox_buffer').map(i => i.json);\n  const byTimestamp = new Map(rows.map(r => [r.timestamp, r.message_id]));\n  for (const ts of timestamps) {\n    const messageId = byTimestamp.get(ts);\n    if (messageId) messageIds.push(messageId);\n  }\n}\n\nif (!messageIds.length && $json.message_id) {\n  messageIds.push($json.message_id);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
       }
     },
     {
