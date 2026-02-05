@@ -32,7 +32,7 @@
     },
     {
       "id": "if_secret",
-      "name": "IF Secret v\u00e1lido",
+      "name": "IF Secret válido",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
@@ -259,7 +259,7 @@
     },
     {
       "id": "prepare_admin_actions",
-      "name": "Preparar acci\u00f3n admin",
+      "name": "Preparar acción admin",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -267,7 +267,7 @@
         80
       ],
       "parameters": {
-        "jsCode": "const clientes = $items('Read clientes (admin)').map(i => i.json);\nconst pagos = $items('Read pagos (admin)').map(i => i.json);\nconst { action, args } = $json;\nlet response = 'Comando no reconocido.';\nlet update = null;\n\nconst findClienteById = (id) => clientes.find(c => c.cliente_id === id);\nconst findPagoById = (id) => pagos.find(p => p.pago_id === id);\n\nif (action === 'BUSCAR_CLIENTE') {\n  const q = (args[0] || '').toLowerCase();\n  const matches = clientes.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.whatsapp || '').includes(q));\n  response = matches.length ? matches.map(c => `${c.cliente_id} | ${c.nombre} | ${c.whatsapp} | ${c.estado}`).join('\n') : 'Sin resultados.';\n}\n\nif (action === 'CONFIRMAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado: 'CONFIRMADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} confirmado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'RECHAZAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado: 'RECHAZADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} rechazado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'ACTUALIZAR_LINK') {\n  const [clienteId, url] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && url) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { link_pago: url } };\n    response = `Link actualizado para ${clienteId}.`;\n  } else {\n    response = 'Cliente o URL inv\u00e1lido.';\n  }\n}\n\nif (action === 'SUSPENDER') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'SUSPENDIDO' } };\n    response = `Cliente ${clienteId} suspendido.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'ACTIVAR') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'ACTIVO' } };\n    response = `Cliente ${clienteId} activado.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'SET_VENCIMIENTO') {\n  const [clienteId, fecha] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && fecha) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { proximo_vencimiento: fecha } };\n    response = `Vencimiento actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inv\u00e1lidos.';\n  }\n}\n\nif (action === 'SET_MONTO') {\n  const [clienteId, monto] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && monto) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { monto_mensual: monto } };\n    response = `Monto actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inv\u00e1lidos.';\n  }\n}\n\nreturn [{ json: { ...$json, response, update } }];"
+        "jsCode": "const clientes = $items('Read clientes (admin)').map(i => i.json);\nconst pagos = $items('Read pagos (admin)').map(i => i.json);\nconst { action, args } = $json;\nlet response = 'Comando no reconocido.';\nlet update = null;\n\nconst findClienteById = (id) => clientes.find(c => c.cliente_id === id);\nconst findPagoById = (id) => pagos.find(p => p.pago_id === id);\n\nif (action === 'BUSCAR_CLIENTE') {\n  const q = (args[0] || '').toLowerCase();\n  const matches = clientes.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.whatsapp || '').includes(q));\n  response = matches.length ? matches.map(c => `${c.cliente_id} | ${c.nombre} | ${c.whatsapp} | ${c.estado}`).join('\n') : 'Sin resultados.';\n}\n\nif (action === 'CONFIRMAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado: 'CONFIRMADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} confirmado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'RECHAZAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado: 'RECHAZADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} rechazado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'ACTUALIZAR_LINK') {\n  const [clienteId, url] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && url) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { link_pago: url } };\n    response = `Link actualizado para ${clienteId}.`;\n  } else {\n    response = 'Cliente o URL inválido.';\n  }\n}\n\nif (action === 'SUSPENDER') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'SUSPENDIDO' } };\n    response = `Cliente ${clienteId} suspendido.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'ACTIVAR') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'ACTIVO' } };\n    response = `Cliente ${clienteId} activado.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'SET_VENCIMIENTO') {\n  const [clienteId, fecha] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && fecha) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { proximo_vencimiento: fecha } };\n    response = `Vencimiento actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nif (action === 'SET_MONTO') {\n  const [clienteId, monto] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && monto) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { monto_mensual: monto } };\n    response = `Monto actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nreturn [{ json: { ...$json, response, update } }];"
       }
     },
     {
@@ -325,7 +325,8 @@
         "sendBody": true,
         "jsonParameters": true,
         "options": {
-          "timeout": 10000
+          "timeout": 10000,
+          "includeInputData": true
         },
         "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"{{$json.response}}\"}\n}",
         "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
@@ -377,7 +378,7 @@
         "sheetId": "={{$env.GSHEET_ID}}",
         "range": "inbox_buffer!A1:H",
         "key": "timestamp",
-        "value": "={{$json.pending_timestamps[0]}}",
+        "value": "={{$json.timestamp}}",
         "options": {
           "dataToSend": "autoMapInputData"
         }
@@ -408,7 +409,7 @@
         320
       ],
       "parameters": {
-        "jsCode": "const clientes = items.map(i => i.json);\nconst wa = $json.whatsapp;\nconst cliente = clientes.find(c => c.whatsapp === wa);\nreturn [{ json: { ...$json, cliente: cliente || null } }];"
+        "jsCode": "const clientes = items.map(i => i.json);\nconst batch = ($items('Agrupar y debounce')[0] || {}).json || {};\nconst wa = batch.whatsapp || '';\nconst cliente = clientes.find(c => c.whatsapp === wa) || null;\nreturn [{ json: { ...batch, cliente } }];"
       }
     },
     {
@@ -446,9 +447,10 @@
         "sendBody": true,
         "jsonParameters": true,
         "options": {
-          "timeout": 10000
+          "timeout": 10000,
+          "includeInputData": true
         },
-        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"Hola, para poder ayudarte necesito registrarte. Ind\u00edcame tu nombre completo y plan.\"}\n}",
+        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"Hola, para poder ayudarte necesito registrarte. Indícame tu nombre completo y plan.\"}\n}",
         "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
       },
       "continueOnFail": true
@@ -498,7 +500,7 @@
         "sheetId": "={{$env.GSHEET_ID}}",
         "range": "inbox_buffer!A1:H",
         "key": "timestamp",
-        "value": "={{$json.pending_timestamps[0]}}",
+        "value": "={{$json.timestamp}}",
         "options": {
           "dataToSend": "autoMapInputData"
         }
@@ -529,7 +531,7 @@
         420
       ],
       "parameters": {
-        "jsCode": "const cliente = $json.cliente;\nconst logs = $items('Read mensajes_log').map(i => i.json).filter(l => l.whatsapp === $json.whatsapp);\nconst lastLogs = logs.slice(-10);\nconst systemPrompt = 'Eres asistente de cobros y atenci\u00f3n. Responde corto, claro, cordial. No inventes pagos. Si falta info, pregunta. No cambies de tema. Mantente en contexto del negocio. Si el usuario env\u00eda varios mensajes unidos, resp\u00f3ndelos juntos.';\nconst context = { cliente: cliente || {}, ultimos_mensajes: lastLogs };\nreturn [{ json: { ...$json, system_prompt: systemPrompt, context_json: JSON.stringify(context), user_input: $json.combined_text || '' } }];"
+        "jsCode": "const cliente = $json.cliente;\nconst logs = $items('Read mensajes_log').map(i => i.json).filter(l => l.whatsapp === $json.whatsapp);\nconst lastLogs = logs.slice(-10);\nconst systemPrompt = 'Eres asistente de cobros y atención. Responde corto, claro, cordial. No inventes pagos. Si falta info, pregunta. No cambies de tema. Mantente en contexto del negocio. Si el usuario envía varios mensajes unidos, respóndelos juntos.';\nconst context = { cliente: cliente || {}, ultimos_mensajes: lastLogs };\nreturn [{ json: { ...$json, system_prompt: systemPrompt, context_json: JSON.stringify(context), user_input: $json.combined_text || '' } }];"
       }
     },
     {
@@ -547,7 +549,8 @@
         "sendBody": true,
         "jsonParameters": true,
         "options": {
-          "timeout": 20000
+          "timeout": 20000,
+          "includeInputData": true
         },
         "bodyParametersJson": "={\n  \"model\": \"{{$env.OPENAI_MODEL_TEXT}}\",\n  \"input\": [\n    {\"role\": \"system\", \"content\": [{\"type\": \"text\", \"text\": \"{{$json.system_prompt}}\"}]},\n    {\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"Contexto: {{$json.context_json}}\"}]},\n    {\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"Mensaje: {{$json.user_input}}\"}]}\n  ]\n}",
         "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.OPENAI_API_KEY}}\"\n}"
@@ -564,7 +567,7 @@
         420
       ],
       "parameters": {
-        "jsCode": "const reply = ($json && $json.output && $json.output[0] && $json.output[0].content && $json.output[0].content[0] && $json.output[0].content[0].text) || 'Gracias por tu mensaje. \u00bfPodr\u00edas darme m\u00e1s detalles?';\nreturn [{ json: { ...$item(0).$json, ai_reply: reply } }];"
+        "jsCode": "const fallback = 'Gracias por tu mensaje. ¿Podrías darme más detalles?';\nconst error = $json.error || ($json.response && $json.response.error) || null;\nconst outputText = ($json.output_text || '').trim();\nconst outputs = Array.isArray($json.output) ? $json.output : [];\nconst contentText = outputs\n  .flatMap(o => Array.isArray(o.content) ? o.content : [])\n  .map(c => (c.text || c.output_text || '').trim())\n  .filter(Boolean)\n  .join('\n');\nconst reply = (outputText || contentText || fallback).trim();\nconst openaiFailed = !!error || (!outputText && !contentText);\nconst errorMessage = error ? (error.message || JSON.stringify(error)) : (openaiFailed ? 'OpenAI response missing output_text/output.' : '');\nreturn [{ json: { ...$json, ai_reply: reply, openai_failed: openaiFailed, openai_error: errorMessage } }];"
       }
     },
     {
@@ -601,7 +604,8 @@
         "method": "GET",
         "sendBody": false,
         "options": {
-          "timeout": 10000
+          "timeout": 10000,
+          "includeInputData": true
         },
         "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
       },
@@ -622,7 +626,8 @@
         "sendBody": false,
         "responseFormat": "file",
         "options": {
-          "timeout": 20000
+          "timeout": 20000,
+          "includeInputData": true
         },
         "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
       },
@@ -656,9 +661,10 @@
         "sendBody": true,
         "jsonParameters": true,
         "options": {
-          "timeout": 25000
+          "timeout": 25000,
+          "includeInputData": true
         },
-        "bodyParametersJson": "={\n  \"model\": \"{{$env.OPENAI_MODEL_VISION}}\",\n  \"input\": [\n    {\"role\": \"system\", \"content\": [{\"type\": \"text\", \"text\": \"Extrae SOLO JSON estrictamente v\u00e1lido con: {monto, moneda, fecha, hora, referencia, entidad, titular, concepto, confidence_0_100, notas}. Sin texto extra.\"}]},\n    {\"role\": \"user\", \"content\": [\n      {\"type\": \"input_text\", \"text\": \"Lee el comprobante y devuelve JSON.\"},\n      {\"type\": \"input_image\", \"image_url\": \"{{$json.image_data_url}}\"}\n    ]}\n  ]\n}",
+        "bodyParametersJson": "={\n  \"model\": \"{{$env.OPENAI_MODEL_VISION}}\",\n  \"input\": [\n    {\"role\": \"system\", \"content\": [{\"type\": \"text\", \"text\": \"Extrae SOLO JSON estrictamente válido con: {monto, moneda, fecha, hora, referencia, entidad, titular, concepto, confidence_0_100, notas}. Sin texto extra.\"}]},\n    {\"role\": \"user\", \"content\": [\n      {\"type\": \"input_text\", \"text\": \"Lee el comprobante y devuelve JSON.\"},\n      {\"type\": \"input_image\", \"image_url\": \"{{$json.image_data_url}}\"}\n    ]}\n  ]\n}",
         "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.OPENAI_API_KEY}}\"\n}"
       },
       "continueOnFail": true
@@ -673,12 +679,12 @@
         340
       ],
       "parameters": {
-        "jsCode": "const cliente = $json.cliente;\nlet parsed = null;\ntry {\n  const raw = $json.output && $json.output[0] && $json.output[0].content && $json.output[0].content[0] && $json.output[0].content[0].text ? $json.output[0].content[0].text : '';\n  parsed = JSON.parse(raw);\n} catch (e) {\n  parsed = null;\n}\nconst monto = Number(parsed && parsed.monto ? parsed.monto : 0);\nconst esperado = Number(cliente && cliente.monto_mensual ? cliente.monto_mensual : 0);\nconst diffOk = esperado ? (Math.abs(monto - esperado) / esperado) <= 0.05 : true;\nconst conf = Number(parsed && parsed.confidence_0_100 ? parsed.confidence_0_100 : 0);\nconst ok = parsed && conf >= 80 && diffOk;\nreturn [{ json: { ...$json, vision_data: parsed, vision_ok: !!ok } }];"
+        "jsCode": "const cliente = $json.cliente;\nlet parsed = null;\ntry {\n  const outputText = ($json.output_text || '').trim();\n  const outputs = Array.isArray($json.output) ? $json.output : [];\n  const contentText = outputs\n    .flatMap(o => Array.isArray(o.content) ? o.content : [])\n    .map(c => (c.text || c.output_text || '').trim())\n    .filter(Boolean)\n    .join('');\n  const raw = outputText || contentText || '';\n  parsed = raw ? JSON.parse(raw) : null;\n} catch (e) {\n  parsed = null;\n}\nconst monto = Number(parsed && parsed.monto ? parsed.monto : 0);\nconst esperado = Number(cliente && cliente.monto_mensual ? cliente.monto_mensual : 0);\nconst diffOk = esperado ? (Math.abs(monto - esperado) / esperado) <= 0.05 : true;\nconst conf = Number(parsed && parsed.confidence_0_100 ? parsed.confidence_0_100 : 0);\nconst ok = parsed && conf >= 80 && diffOk;\nreturn [{ json: { ...$json, vision_data: parsed, vision_ok: !!ok } }];"
       }
     },
     {
       "id": "if_vision_ok",
-      "name": "IF Visi\u00f3n OK",
+      "name": "IF Visión OK",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
@@ -742,7 +748,8 @@
         "sendBody": true,
         "jsonParameters": true,
         "options": {
-          "timeout": 10000
+          "timeout": 10000,
+          "includeInputData": true
         },
         "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$env.OWNER_WHATSAPP}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"Pago pendiente creado. ID: {{$json.pago_id}}\\nCONFIRMAR PAGO <pago_id>\\nRECHAZAR PAGO <pago_id>\"}\n}",
         "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
@@ -764,9 +771,10 @@
         "sendBody": true,
         "jsonParameters": true,
         "options": {
-          "timeout": 10000
+          "timeout": 10000,
+          "includeInputData": true
         },
-        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"Recib\u00ed tu comprobante \u2705 lo estoy verificando y te confirmo en breve.\"}\n}",
+        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"Recibí tu comprobante ✅ lo estoy verificando y te confirmo en breve.\"}\n}",
         "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
       },
       "continueOnFail": true
@@ -786,9 +794,10 @@
         "sendBody": true,
         "jsonParameters": true,
         "options": {
-          "timeout": 10000
+          "timeout": 10000,
+          "includeInputData": true
         },
-        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"No pude verificar el comprobante. \u00bfPodr\u00edas enviar una captura m\u00e1s clara o indicar monto, fecha y referencia?\"}\n}",
+        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"No pude verificar el comprobante. ¿Podrías enviar una captura más clara o indicar monto, fecha y referencia?\"}\n}",
         "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
       },
       "continueOnFail": true
@@ -808,7 +817,8 @@
         "sendBody": true,
         "jsonParameters": true,
         "options": {
-          "timeout": 10000
+          "timeout": 10000,
+          "includeInputData": true
         },
         "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"{{$json.ai_reply}}\"}\n}",
         "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
@@ -849,7 +859,7 @@
         "sheetId": "={{$env.GSHEET_ID}}",
         "range": "inbox_buffer!A1:H",
         "key": "timestamp",
-        "value": "={{$json.pending_timestamps[0]}}",
+        "value": "={{$json.timestamp}}",
         "options": {
           "dataToSend": "autoMapInputData"
         }
@@ -934,7 +944,8 @@
         "sendBody": true,
         "jsonParameters": true,
         "options": {
-          "timeout": 10000
+          "timeout": 10000,
+          "includeInputData": true
         },
         "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.cliente.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"{{$json.texto}}\"}\n}",
         "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
@@ -1042,7 +1053,8 @@
         "sendBody": true,
         "jsonParameters": true,
         "options": {
-          "timeout": 10000
+          "timeout": 10000,
+          "includeInputData": true
         },
         "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$env.OWNER_WHATSAPP}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"{{$json.texto}}\"}\n}",
         "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
@@ -1090,7 +1102,7 @@
         160
       ],
       "parameters": {
-        "jsCode": "return [{ json: { timestamp: $json.pending_timestamps[0], status: 'DONE', batch_id: $json.batch_id || '' } }];"
+        "jsCode": "const timestamps = Array.isArray($json.pending_timestamps) ? $json.pending_timestamps : [];\nif (!timestamps.length && $json.pending_timestamps) {\n  timestamps.push($json.pending_timestamps);\n}\nreturn timestamps.map(ts => ({ json: { timestamp: ts, status: 'DONE', batch_id: $json.batch_id || '' } }));"
       }
     },
     {
@@ -1103,7 +1115,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "return [{ json: { timestamp: $json.pending_timestamps[0], status: 'DONE', batch_id: $json.batch_id || '' } }];"
+        "jsCode": "const timestamps = Array.isArray($json.pending_timestamps) ? $json.pending_timestamps : [];\nif (!timestamps.length && $json.pending_timestamps) {\n  timestamps.push($json.pending_timestamps);\n}\nreturn timestamps.map(ts => ({ json: { timestamp: ts, status: 'DONE', batch_id: $json.batch_id || '' } }));"
       }
     },
     {
@@ -1116,7 +1128,62 @@
         520
       ],
       "parameters": {
-        "jsCode": "return [{ json: { timestamp: $json.pending_timestamps[0], status: 'DONE', batch_id: $json.batch_id || '' } }];"
+        "jsCode": "const timestamps = Array.isArray($json.pending_timestamps) ? $json.pending_timestamps : [];\nif (!timestamps.length && $json.pending_timestamps) {\n  timestamps.push($json.pending_timestamps);\n}\nreturn timestamps.map(ts => ({ json: { timestamp: ts, status: 'DONE', batch_id: $json.batch_id || '' } }));"
+      }
+    },
+    {
+      "id": "switch_admin_update",
+      "name": "Switch update.sheet",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [
+        540,
+        80
+      ],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json.update && $json.update.sheet ? $json.update.sheet : ''}}",
+        "rules": [
+          {
+            "operation": "equals",
+            "value2": "clientes"
+          },
+          {
+            "operation": "equals",
+            "value2": "pagos"
+          }
+        ]
+      }
+    },
+    {
+      "id": "build_log_ai",
+      "name": "Preparar log respuesta IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        640
+      ],
+      "parameters": {
+        "jsCode": "const resumen = ($json.ai_reply || '').slice(0, 120);\nconst status = $json.openai_failed ? 'ERROR' : 'OK';\nconst errorEnvio = $json.openai_failed ? ($json.openai_error || 'OpenAI error') : '';\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: 'RESPUESTA_IA',\n  resumen,\n  message_key: '',\n  status_envio: status,\n  error_envio: errorEnvio\n} }];"
+      }
+    },
+    {
+      "id": "log_ai",
+      "name": "Log respuesta IA",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1660,
+        640
+      ],
+      "parameters": {
+        "operation": "append",
+        "sheetId": "={{$env.GSHEET_ID}}",
+        "range": "mensajes_log!A1:H",
+        "options": {
+          "valueInputMode": "USER_ENTERED"
+        }
       }
     }
   ],
@@ -1136,14 +1203,14 @@
       "main": [
         [
           {
-            "node": "IF Secret v\u00e1lido",
+            "node": "IF Secret válido",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "IF Secret v\u00e1lido": {
+    "IF Secret válido": {
       "main": [
         [
           {
@@ -1260,28 +1327,18 @@
       "main": [
         [
           {
-            "node": "Preparar acci\u00f3n admin",
+            "node": "Preparar acción admin",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Preparar acci\u00f3n admin": {
+    "Preparar acción admin": {
       "main": [
         [
           {
-            "node": "Update cliente",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Update pago",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Enviar WhatsApp owner",
+            "node": "Switch update.sheet",
             "type": "main",
             "index": 0
           }
@@ -1504,14 +1561,14 @@
       "main": [
         [
           {
-            "node": "IF Visi\u00f3n OK",
+            "node": "IF Visión OK",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "IF Visi\u00f3n OK": {
+    "IF Visión OK": {
       "main": [
         [
           {
@@ -1565,6 +1622,11 @@
     "Enviar respuesta IA": {
       "main": [
         [
+          {
+            "node": "Preparar log respuesta IA",
+            "type": "main",
+            "index": 0
+          },
           {
             "node": "Actualizar ultimo_contacto",
             "type": "main",
@@ -1737,6 +1799,67 @@
           }
         ]
       ]
+    },
+    "Switch update.sheet": {
+      "main": [
+        [
+          {
+            "node": "Update cliente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update pago",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar WhatsApp owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update cliente": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update pago": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar log respuesta IA": {
+      "main": [
+        [
+          {
+            "node": "Log respuesta IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log respuesta IA": {
+      "main": []
     }
   },
   "active": false,
