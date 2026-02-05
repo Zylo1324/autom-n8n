@@ -1106,7 +1106,7 @@
         160
       ],
       "parameters": {
-        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nif (!messageIds.length && $json.pending_timestamps) {\n  const timestamps = Array.isArray($json.pending_timestamps) ? $json.pending_timestamps : [$json.pending_timestamps];\n  const rows = $items('Read inbox_buffer').map(i => i.json);\n  const byTimestamp = new Map(rows.map(r => [r.timestamp, r.message_id]));\n  for (const ts of timestamps) {\n    const messageId = byTimestamp.get(ts);\n    if (messageId) messageIds.push(messageId);\n  }\n}\n\nif (!messageIds.length && $json.message_id) {\n  messageIds.push($json.message_id);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
+        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
       }
     },
     {
@@ -1119,7 +1119,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nif (!messageIds.length && $json.pending_timestamps) {\n  const timestamps = Array.isArray($json.pending_timestamps) ? $json.pending_timestamps : [$json.pending_timestamps];\n  const rows = $items('Read inbox_buffer').map(i => i.json);\n  const byTimestamp = new Map(rows.map(r => [r.timestamp, r.message_id]));\n  for (const ts of timestamps) {\n    const messageId = byTimestamp.get(ts);\n    if (messageId) messageIds.push(messageId);\n  }\n}\n\nif (!messageIds.length && $json.message_id) {\n  messageIds.push($json.message_id);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
+        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
       }
     },
     {
@@ -1132,7 +1132,7 @@
         520
       ],
       "parameters": {
-        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nif (!messageIds.length && $json.pending_timestamps) {\n  const timestamps = Array.isArray($json.pending_timestamps) ? $json.pending_timestamps : [$json.pending_timestamps];\n  const rows = $items('Read inbox_buffer').map(i => i.json);\n  const byTimestamp = new Map(rows.map(r => [r.timestamp, r.message_id]));\n  for (const ts of timestamps) {\n    const messageId = byTimestamp.get(ts);\n    if (messageId) messageIds.push(messageId);\n  }\n}\n\nif (!messageIds.length && $json.message_id) {\n  messageIds.push($json.message_id);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
+        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
       }
     },
     {
