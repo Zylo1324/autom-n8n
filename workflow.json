@@ -275,6 +275,19 @@
       }
     },
     {
+      "id": "flatten_update_data",
+      "name": "Aplanar update.data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        80
+      ],
+      "parameters": {
+        "jsCode": "const u = $json.update || {};\nconst data = (u.data || {});\nconst key = u.key || '';\nconst value = u.value || '';\nreturn [{ json: { ...data, [key]: value } }];"
+      }
+    },
+    {
       "id": "update_cliente",
       "name": "Update cliente",
       "type": "n8n-nodes-base.googleSheets",
@@ -288,7 +301,7 @@
         "sheetId": "={{$env.GSHEET_ID}}",
         "range": "clientes!A1:M",
         "key": "cliente_id",
-        "value": "={{$json.update.value}}",
+        "value": "={{$json.cliente_id}}",
         "options": {
           "dataToSend": "autoMapInputData"
         }
@@ -308,7 +321,7 @@
         "sheetId": "={{$env.GSHEET_ID}}",
         "range": "pagos!A1:L",
         "key": "pago_id",
-        "value": "={{$json.update.value}}",
+        "value": "={{$json.pago_id}}",
         "options": {
           "dataToSend": "autoMapInputData"
         }
@@ -830,6 +843,19 @@
       "continueOnFail": true
     },
     {
+      "id": "clean_last_contact_payload",
+      "name": "Payload ultimo_contacto limpio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        520
+      ],
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    cliente_id: $json.cliente?.cliente_id || '',\n    ultimo_contacto: new Date().toISOString()\n  }\n}];"
+      }
+    },
+    {
       "id": "update_last_contact",
       "name": "Actualizar ultimo_contacto",
       "type": "n8n-nodes-base.googleSheets",
@@ -843,7 +869,7 @@
         "sheetId": "={{$env.GSHEET_ID}}",
         "range": "clientes!A1:M",
         "key": "cliente_id",
-        "value": "={{$json.cliente.cliente_id}}",
+        "value": "={{$json.cliente_id}}",
         "options": {
           "dataToSend": "autoMapInputData"
         }
@@ -1342,6 +1368,17 @@
       "main": [
         [
           {
+            "node": "Aplanar update.data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aplanar update.data": {
+      "main": [
+        [
+          {
             "node": "Switch update.sheet",
             "type": "main",
             "index": 0
@@ -1631,6 +1668,17 @@
             "type": "main",
             "index": 0
           },
+          {
+            "node": "Payload ultimo_contacto limpio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payload ultimo_contacto limpio": {
+      "main": [
+        [
           {
             "node": "Actualizar ultimo_contacto",
             "type": "main",
