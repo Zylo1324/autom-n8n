@@ -402,6 +402,37 @@
       }
     },
     {
+      "id": "filter_done_admin",
+      "name": "Filtrar DONE (admin)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1380,
+        160
+      ],
+      "parameters": {
+        "options": {
+          "keepOnlySet": true
+        },
+        "values": {
+          "string": [
+            {
+              "name": "message_id",
+              "value": "={{$json.message_id}}"
+            },
+            {
+              "name": "status",
+              "value": "={{$json.status}}"
+            },
+            {
+              "name": "batch_id",
+              "value": "={{$json.batch_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
       "id": "read_clientes",
       "name": "Read clientes",
       "type": "n8n-nodes-base.googleSheets",
@@ -520,6 +551,37 @@
         "value": "={{$json.message_id}}",
         "options": {
           "dataToSend": "autoMapInputData"
+        }
+      }
+    },
+    {
+      "id": "filter_done_new",
+      "name": "Filtrar DONE (nuevo)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        960,
+        220
+      ],
+      "parameters": {
+        "options": {
+          "keepOnlySet": true
+        },
+        "values": {
+          "string": [
+            {
+              "name": "message_id",
+              "value": "={{$json.message_id}}"
+            },
+            {
+              "name": "status",
+              "value": "={{$json.status}}"
+            },
+            {
+              "name": "batch_id",
+              "value": "={{$json.batch_id}}"
+            }
+          ]
         }
       }
     },
@@ -892,6 +954,37 @@
         "value": "={{$json.message_id}}",
         "options": {
           "dataToSend": "autoMapInputData"
+        }
+      }
+    },
+    {
+      "id": "filter_done_client",
+      "name": "Filtrar DONE (cliente)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        520
+      ],
+      "parameters": {
+        "options": {
+          "keepOnlySet": true
+        },
+        "values": {
+          "string": [
+            {
+              "name": "message_id",
+              "value": "={{$json.message_id}}"
+            },
+            {
+              "name": "status",
+              "value": "={{$json.status}}"
+            },
+            {
+              "name": "batch_id",
+              "value": "={{$json.batch_id}}"
+            }
+          ]
         }
       }
     },
@@ -1823,6 +1916,17 @@
       "main": [
         [
           {
+            "node": "Filtrar DONE (admin)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar DONE (admin)": {
+      "main": [
+        [
+          {
             "node": "Marcar buffer DONE (admin)",
             "type": "main",
             "index": 0
@@ -1834,6 +1938,17 @@
       "main": [
         [
           {
+            "node": "Filtrar DONE (nuevo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar DONE (nuevo)": {
+      "main": [
+        [
+          {
             "node": "Marcar buffer DONE (nuevo)",
             "type": "main",
             "index": 0
@@ -1842,6 +1957,17 @@
       ]
     },
     "Preparar buffer DONE (cliente)": {
+      "main": [
+        [
+          {
+            "node": "Filtrar DONE (cliente)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar DONE (cliente)": {
       "main": [
         [
           {
