@@ -2,43 +2,35 @@
   "name": "Cobros WhatsApp + Sheets + OpenAI (Pro)",
   "nodes": [
     {
-      "id": "webhook_in",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-in",
+        "options": {}
+      },
+      "id": "98f846a4-b2f3-4cad-8bd7-2e62a90c8187",
       "name": "Webhook In",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        -1200,
-        -200
+        0,
+        0
       ],
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "whatsapp-in",
-        "responseMode": "onReceived",
-        "options": {}
-      }
+      "webhookId": "f80acfa6-40ba-405e-92c0-2eae4f97dc35"
     },
     {
-      "id": "normalize_validate",
+      "parameters": {
+        "jsCode": "const data = $json;\nconst headers = $headers ?? data.headers ?? {};\nconst query = data.query ?? {};\nconst payload = data.body ?? data;\nconst secret = headers['x-origin-secret'] || headers['X-Origin-Secret'] || query.secret;\nconst validSecret = secret === $env.ORIGIN_SECRET;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0] ?? {};\n\nconst from = message.from ?? '';\nconst messageId = message.id ?? '';\nconst timestamp = message.timestamp ? new Date(parseInt(message.timestamp, 10) * 1000).toISOString() : new Date().toISOString();\nconst type = message.type || 'text';\n\nlet text = '';\nlet mediaId = '';\nlet mediaMime = '';\n\nif (type === 'text') {\n  text = message.text?.body || '';\n} else if (type === 'image') {\n  mediaId = message.image?.id || '';\n  mediaMime = message.image?.mime_type || '';\n  text = message.image?.caption || '';\n} else if (type === 'document') {\n  mediaId = message.document?.id || '';\n  mediaMime = message.document?.mime_type || '';\n  text = message.document?.caption || '';\n}\n\nconst normalizePhone = (raw) => {\n  const digits = (raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    valid_secret: !!validSecret,\n    timestamp,\n    whatsapp: normalizePhone(from),\n    message_id: messageId,\n    message_type: mediaId ? 'media' : 'text',\n    text: text || '',\n    media_id: mediaId || '',\n    media_mime: mediaMime || ''\n  }\n}];"
+      },
+      "id": "d90f15c8-3b5e-4c48-a22a-fe158506f5f9",
       "name": "Normalizar y validar",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -980,
-        -200
-      ],
-      "parameters": {
-        "jsCode": "const data = $json;\nconst headers = $headers ?? data.headers ?? {};\nconst query = data.query ?? {};\nconst payload = data.body ?? data;\nconst secret = headers['x-origin-secret'] || headers['X-Origin-Secret'] || query.secret;\nconst validSecret = secret === $env.ORIGIN_SECRET;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0] ?? {};\n\nconst from = message.from ?? '';\nconst messageId = message.id ?? '';\nconst timestamp = message.timestamp ? new Date(parseInt(message.timestamp, 10) * 1000).toISOString() : new Date().toISOString();\nconst type = message.type || 'text';\n\nlet text = '';\nlet mediaId = '';\nlet mediaMime = '';\n\nif (type === 'text') {\n  text = message.text?.body || '';\n} else if (type === 'image') {\n  mediaId = message.image?.id || '';\n  mediaMime = message.image?.mime_type || '';\n  text = message.image?.caption || '';\n} else if (type === 'document') {\n  mediaId = message.document?.id || '';\n  mediaMime = message.document?.mime_type || '';\n  text = message.document?.caption || '';\n}\n\nconst normalizePhone = (raw) => {\n  const digits = (raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    valid_secret: !!validSecret,\n    timestamp,\n    whatsapp: normalizePhone(from),\n    message_id: messageId,\n    message_type: mediaId ? 'media' : 'text',\n    text: text || '',\n    media_id: mediaId || '',\n    media_mime: mediaMime || ''\n  }\n}];"
-      }
+        224,
+        0
+      ]
     },
     {
-      "id": "if_secret",
-      "name": "IF Secret válido",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        -760,
-        -200
-      ],
       "parameters": {
         "conditions": {
           "boolean": [
@@ -47,18 +39,19 @@
               "value2": true
             }
           ]
-        }
-      }
-    },
-    {
-      "id": "prepare_buffer",
-      "name": "Preparar buffer",
-      "type": "n8n-nodes-base.set",
+        },
+        "options": {}
+      },
+      "id": "18e76d5e-95a4-4e18-b00e-25bc5cc307b0",
+      "name": "IF Secret válido",
+      "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -540,
-        -200
-      ],
+        448,
+        0
+      ]
+    },
+    {
       "parameters": {
         "values": {
           "string": [
@@ -95,68 +88,172 @@
               "value": "PENDING"
             },
             {
-              "name": "batch_id",
-              "value": ""
+              "name": "batch_id"
             }
           ]
-        }
-      }
+        },
+        "options": {}
+      },
+      "id": "0beda0c2-b9dc-4d87-961b-a8fa4e94e9b4",
+      "name": "Preparar buffer",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ]
     },
     {
-      "id": "append_inbox_buffer",
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg",
+          "mode": "list",
+          "cachedResultName": "inbox_buffer",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "inbox_buffer",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "whatsapp",
+              "displayName": "whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_type",
+              "displayName": "message_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "text",
+              "displayName": "text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_id",
+              "displayName": "media_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_mime",
+              "displayName": "media_mime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "batch_id",
+              "displayName": "batch_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d5498113-b938-4212-ab58-e72ec4fd923a",
       "name": "Append inbox_buffer",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        -320,
-        -200
+        880,
+        0
       ],
-      "parameters": {
-        "operation": "append",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "inbox_buffer!A1:I",
-        "options": {
-          "valueInputMode": "USER_ENTERED"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     },
     {
-      "id": "respond_ok",
+      "parameters": {
+        "options": {}
+      },
+      "id": "8f6294f1-1c85-4420-9017-ea8c348b5922",
       "name": "Respond OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        -100,
-        -200
-      ],
-      "parameters": {
-        "responseCode": 200,
-        "responseData": "=ok"
-      }
+        1104,
+        0
+      ]
     },
     {
-      "id": "respond_invalid",
+      "parameters": {
+        "options": {}
+      },
+      "id": "d7361a8b-4584-47dc-b846-7a2809d3302d",
       "name": "Respond OK (invalid)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        -320,
-        -20
-      ],
-      "parameters": {
-        "responseCode": 200,
-        "responseData": "=ok"
-      }
+        880,
+        192
+      ]
     },
     {
-      "id": "cron_processor",
-      "name": "Cron Procesador",
-      "type": "n8n-nodes-base.cron",
-      "typeVersion": 1,
-      "position": [
-        -1200,
-        200
-      ],
       "parameters": {
         "triggerTimes": {
           "item": [
@@ -167,45 +264,58 @@
             }
           ]
         }
-      }
+      },
+      "id": "60ab0bce-49ab-4e07-b103-c67757e46f6c",
+      "name": "Cron Procesador",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        0,
+        400
+      ]
     },
     {
-      "id": "read_inbox_buffer",
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "0ae4036e-e239-4f35-9a79-4a6f846aeafb",
       "name": "Read inbox_buffer",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        -980,
-        200
+        224,
+        400
       ],
-      "parameters": {
-        "operation": "read",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "inbox_buffer!A1:I"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
-      "id": "group_debounce",
+      "parameters": {
+        "jsCode": "const WINDOW_SEC = Number($env.WINDOW_SEC || 12);\nconst now = Date.now();\nconst rows = items.map(i => i.json);\nconst pending = rows.filter(r => r.status === 'PENDING');\n\nconst byWhatsapp = {};\nfor (const row of pending) {\n  const wa = row.whatsapp || '';\n  if (!wa) continue;\n  if (!byWhatsapp[wa]) byWhatsapp[wa] = [];\n  byWhatsapp[wa].push(row);\n}\n\nconst output = [];\nfor (const [wa, msgs] of Object.entries(byWhatsapp)) {\n  const sorted = msgs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());\n  const last = sorted[sorted.length - 1];\n  const ageSec = (now - new Date(last.timestamp).getTime()) / 1000;\n  if (ageSec < WINDOW_SEC) continue;\n\n  const combinedText = sorted.map(m => m.text).filter(Boolean).join('\n');\n  const hasImage = sorted.some(m => (m.media_mime || '').startsWith('image/'));\n  const mediaIds = sorted.filter(m => (m.media_mime || '').startsWith('image/')).map(m => m.media_id).filter(Boolean);\n  const pendingTimestamps = sorted.map(m => m.timestamp);\n  const pendingMessageIds = sorted.map(m => m.message_id).filter(Boolean);\n\n  output.push({\n    json: {\n      whatsapp: wa,\n      combined_text: combinedText,\n      has_image: hasImage,\n      media_ids: mediaIds,\n      pending_timestamps: pendingTimestamps,\n      pending_message_ids: pendingMessageIds,\n      last_message_at: last.timestamp,\n      batch_id: `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`\n    }\n  });\n}\n\nreturn output;"
+      },
+      "id": "57e41b59-b93c-4f69-bb4c-68c8a3936197",
       "name": "Agrupar y debounce",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -760,
-        200
-      ],
-      "parameters": {
-        "jsCode": "const WINDOW_SEC = Number($env.WINDOW_SEC || 12);\nconst now = Date.now();\nconst rows = items.map(i => i.json);\nconst pending = rows.filter(r => r.status === 'PENDING');\n\nconst byWhatsapp = {};\nfor (const row of pending) {\n  const wa = row.whatsapp || '';\n  if (!wa) continue;\n  if (!byWhatsapp[wa]) byWhatsapp[wa] = [];\n  byWhatsapp[wa].push(row);\n}\n\nconst output = [];\nfor (const [wa, msgs] of Object.entries(byWhatsapp)) {\n  const sorted = msgs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());\n  const last = sorted[sorted.length - 1];\n  const ageSec = (now - new Date(last.timestamp).getTime()) / 1000;\n  if (ageSec < WINDOW_SEC) continue;\n\n  const combinedText = sorted.map(m => m.text).filter(Boolean).join('\n');\n  const hasImage = sorted.some(m => (m.media_mime || '').startsWith('image/'));\n  const mediaIds = sorted.filter(m => (m.media_mime || '').startsWith('image/')).map(m => m.media_id).filter(Boolean);\n  const pendingTimestamps = sorted.map(m => m.timestamp);\n  const pendingMessageIds = sorted.map(m => m.message_id).filter(Boolean);\n\n  output.push({\n    json: {\n      whatsapp: wa,\n      combined_text: combinedText,\n      has_image: hasImage,\n      media_ids: mediaIds,\n      pending_timestamps: pendingTimestamps,\n      pending_message_ids: pendingMessageIds,\n      last_message_at: last.timestamp,\n      batch_id: `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`\n    }\n  });\n}\n\nreturn output;"
-      }
+        448,
+        400
+      ]
     },
     {
-      "id": "if_owner",
-      "name": "IF Owner",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        -540,
-        200
-      ],
       "parameters": {
         "conditions": {
           "string": [
@@ -215,205 +325,268 @@
               "value2": "={{$env.OWNER_WHATSAPP}}"
             }
           ]
-        }
-      }
+        },
+        "options": {}
+      },
+      "id": "6a74ca1e-19ec-40b0-9982-b6b58bede744",
+      "name": "IF Owner",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        672,
+        400
+      ]
     },
     {
-      "id": "parse_admin",
+      "parameters": {
+        "jsCode": "const text = ($json.combined_text || '').trim();\nconst upper = text.toUpperCase();\nlet action = 'UNKNOWN';\nlet args = [];\n\nconst parts = text.split(/[ ]+/);\n\nif (upper.startsWith('BUSCAR CLIENTE')) {\n  action = 'BUSCAR_CLIENTE';\n  args = [text.replace(/BUSCAR CLIENTE[ ]*/i, '')];\n} else if (upper.startsWith('CONFIRMAR PAGO')) {\n  action = 'CONFIRMAR_PAGO';\n  args = [text.replace(/CONFIRMAR PAGO[ ]*/i, '')];\n} else if (upper.startsWith('RECHAZAR PAGO')) {\n  action = 'RECHAZAR_PAGO';\n  args = [text.replace(/RECHAZAR PAGO[ ]*/i, '')];\n} else if (upper.startsWith('ACTUALIZAR LINK')) {\n  action = 'ACTUALIZAR_LINK';\n  args = parts.slice(2);\n} else if (upper.startsWith('SUSPENDER')) {\n  action = 'SUSPENDER';\n  args = [parts[1]];\n} else if (upper.startsWith('ACTIVAR')) {\n  action = 'ACTIVAR';\n  args = [parts[1]];\n} else if (upper.startsWith('SET VENCIMIENTO')) {\n  action = 'SET_VENCIMIENTO';\n  args = parts.slice(2);\n} else if (upper.startsWith('SET MONTO')) {\n  action = 'SET_MONTO';\n  args = parts.slice(2);\n}\n\nreturn [{ json: { ...$json, action, args } }];"
+      },
+      "id": "59bf6847-762b-4e45-bee9-e710d94ec26b",
       "name": "Parse comando admin",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -320,
-        80
-      ],
-      "parameters": {
-        "jsCode": "const text = ($json.combined_text || '').trim();\nconst upper = text.toUpperCase();\nlet action = 'UNKNOWN';\nlet args = [];\n\nconst parts = text.split(/[ ]+/);\n\nif (upper.startsWith('BUSCAR CLIENTE')) {\n  action = 'BUSCAR_CLIENTE';\n  args = [text.replace(/BUSCAR CLIENTE[ ]*/i, '')];\n} else if (upper.startsWith('CONFIRMAR PAGO')) {\n  action = 'CONFIRMAR_PAGO';\n  args = [text.replace(/CONFIRMAR PAGO[ ]*/i, '')];\n} else if (upper.startsWith('RECHAZAR PAGO')) {\n  action = 'RECHAZAR_PAGO';\n  args = [text.replace(/RECHAZAR PAGO[ ]*/i, '')];\n} else if (upper.startsWith('ACTUALIZAR LINK')) {\n  action = 'ACTUALIZAR_LINK';\n  args = parts.slice(2);\n} else if (upper.startsWith('SUSPENDER')) {\n  action = 'SUSPENDER';\n  args = [parts[1]];\n} else if (upper.startsWith('ACTIVAR')) {\n  action = 'ACTIVAR';\n  args = [parts[1]];\n} else if (upper.startsWith('SET VENCIMIENTO')) {\n  action = 'SET_VENCIMIENTO';\n  args = parts.slice(2);\n} else if (upper.startsWith('SET MONTO')) {\n  action = 'SET_MONTO';\n  args = parts.slice(2);\n}\n\nreturn [{ json: { ...$json, action, args } }];"
-      }
+        880,
+        288
+      ]
     },
     {
-      "id": "read_clientes_admin",
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "ca6e20e6-ec2a-4e90-8c56-7b4116e1b534",
       "name": "Read clientes (admin)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        -100,
-        80
+        1104,
+        288
       ],
-      "parameters": {
-        "operation": "read",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "clientes!A1:M"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
-      "id": "read_pagos_admin",
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "1a0519c2-f0ab-451f-8b90-85e85dcca181",
       "name": "Read pagos (admin)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        120,
-        80
+        1328,
+        288
       ],
-      "parameters": {
-        "operation": "read",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "pagos!A1:L"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
-      "id": "prepare_admin_actions",
+      "parameters": {
+        "jsCode": "const clientes = $items('Read clientes (admin)').map(i => i.json);\nconst pagos = $items('Read pagos (admin)').map(i => i.json);\nconst { action, args } = $json;\nlet response = 'Comando no reconocido.';\nlet update = null;\n\nconst findClienteById = (id) => clientes.find(c => c.cliente_id === id);\nconst findPagoById = (id) => pagos.find(p => p.pago_id === id);\n\nif (action === 'BUSCAR_CLIENTE') {\n  const q = (args[0] || '').toLowerCase();\n  const matches = clientes.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.whatsapp || '').includes(q));\n  response = matches.length ? matches.map(c => `${c.cliente_id} | ${c.nombre} | ${c.whatsapp} | ${c.estado}`).join('\n') : 'Sin resultados.';\n}\n\nif (action === 'CONFIRMAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado: 'CONFIRMADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} confirmado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'RECHAZAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado: 'RECHAZADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} rechazado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'ACTUALIZAR_LINK') {\n  const [clienteId, url] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && url) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { link_pago: url } };\n    response = `Link actualizado para ${clienteId}.`;\n  } else {\n    response = 'Cliente o URL inválido.';\n  }\n}\n\nif (action === 'SUSPENDER') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'SUSPENDIDO' } };\n    response = `Cliente ${clienteId} suspendido.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'ACTIVAR') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'ACTIVO' } };\n    response = `Cliente ${clienteId} activado.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'SET_VENCIMIENTO') {\n  const [clienteId, fecha] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && fecha) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { proximo_vencimiento: fecha } };\n    response = `Vencimiento actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nif (action === 'SET_MONTO') {\n  const [clienteId, monto] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && monto) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { monto_mensual: monto } };\n    response = `Monto actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nreturn [{ json: { ...$json, response, update } }];"
+      },
+      "id": "79df92ad-4dc5-4a7d-9439-6c075720f55d",
       "name": "Preparar acción admin",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        340,
-        80
-      ],
-      "parameters": {
-        "jsCode": "const clientes = $items('Read clientes (admin)').map(i => i.json);\nconst pagos = $items('Read pagos (admin)').map(i => i.json);\nconst { action, args } = $json;\nlet response = 'Comando no reconocido.';\nlet update = null;\n\nconst findClienteById = (id) => clientes.find(c => c.cliente_id === id);\nconst findPagoById = (id) => pagos.find(p => p.pago_id === id);\n\nif (action === 'BUSCAR_CLIENTE') {\n  const q = (args[0] || '').toLowerCase();\n  const matches = clientes.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.whatsapp || '').includes(q));\n  response = matches.length ? matches.map(c => `${c.cliente_id} | ${c.nombre} | ${c.whatsapp} | ${c.estado}`).join('\n') : 'Sin resultados.';\n}\n\nif (action === 'CONFIRMAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado: 'CONFIRMADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} confirmado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'RECHAZAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado: 'RECHAZADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} rechazado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'ACTUALIZAR_LINK') {\n  const [clienteId, url] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && url) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { link_pago: url } };\n    response = `Link actualizado para ${clienteId}.`;\n  } else {\n    response = 'Cliente o URL inválido.';\n  }\n}\n\nif (action === 'SUSPENDER') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'SUSPENDIDO' } };\n    response = `Cliente ${clienteId} suspendido.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'ACTIVAR') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'ACTIVO' } };\n    response = `Cliente ${clienteId} activado.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'SET_VENCIMIENTO') {\n  const [clienteId, fecha] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && fecha) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { proximo_vencimiento: fecha } };\n    response = `Vencimiento actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nif (action === 'SET_MONTO') {\n  const [clienteId, monto] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && monto) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { monto_mensual: monto } };\n    response = `Monto actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nreturn [{ json: { ...$json, response, update } }];"
-      }
+        1552,
+        288
+      ]
     },
     {
-      "id": "flatten_update_data",
+      "parameters": {
+        "jsCode": "const u = $json.update || {};\nconst data = (u.data || {});\nconst key = u.key || '';\nconst value = u.value || '';\nreturn [{ json: { ...data, [key]: value } }];"
+      },
+      "id": "dfdf47f9-7feb-41de-b2ca-62c62c30f01b",
       "name": "Aplanar update.data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        440,
-        80
-      ],
-      "parameters": {
-        "jsCode": "const u = $json.update || {};\nconst data = (u.data || {});\nconst key = u.key || '';\nconst value = u.value || '';\nreturn [{ json: { ...data, [key]: value } }];"
-      }
+        1648,
+        288
+      ]
     },
     {
-      "id": "update_cliente",
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "30e4afc7-3061-4f62-ae39-0d119b7b2057",
       "name": "Update cliente",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        560,
-        -20
+        1760,
+        192
       ],
-      "parameters": {
-        "operation": "update",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "clientes!A1:M",
-        "key": "cliente_id",
-        "value": "={{$json.cliente_id}}",
-        "options": {
-          "dataToSend": "autoMapInputData"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     },
     {
-      "id": "update_pago",
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "be304f9b-7aad-464b-8b62-6dda8ceaa026",
       "name": "Update pago",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        560,
-        120
+        1760,
+        320
       ],
-      "parameters": {
-        "operation": "update",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "pagos!A1:L",
-        "key": "pago_id",
-        "value": "={{$json.pago_id}}",
-        "options": {
-          "dataToSend": "autoMapInputData"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     },
     {
-      "id": "send_owner_response",
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "aef1a728-072e-4c36-8c9f-549e5c000943",
       "name": "Enviar WhatsApp owner",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        780,
-        80
+        1984,
+        288
       ],
-      "parameters": {
-        "url": "={{$env.WHATSAPP_API_URL}}",
-        "method": "POST",
-        "sendBody": true,
-        "jsonParameters": true,
-        "options": {
-          "timeout": 10000,
-          "includeInputData": true
-        },
-        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"{{$json.response}}\"}\n}",
-        "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
-      },
       "continueOnFail": true
     },
     {
-      "id": "build_log_admin",
+      "parameters": {
+        "jsCode": "const resumen = ($json.response || '').slice(0, 120);\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: 'ADMIN',\n  resumen,\n  message_key: '',\n  status_envio: 'OK',\n  error_envio: ''\n} }];"
+      },
+      "id": "d315cc04-62c8-4221-9bc7-ed605ef568a9",
       "name": "Preparar log admin",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        980,
-        160
-      ],
-      "parameters": {
-        "jsCode": "const resumen = ($json.response || '').slice(0, 120);\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: 'ADMIN',\n  resumen,\n  message_key: '',\n  status_envio: 'OK',\n  error_envio: ''\n} }];"
-      }
+        2192,
+        368
+      ]
     },
     {
-      "id": "log_admin",
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "2943758e-6a7d-452b-8f40-a0d9878cf6f0",
       "name": "Log admin",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1200,
-        160
+        2400,
+        368
       ],
-      "parameters": {
-        "operation": "append",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "mensajes_log!A1:H",
-        "options": {
-          "valueInputMode": "USER_ENTERED"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     },
     {
-      "id": "mark_buffer_done_admin",
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "13620a3c-73af-4f99-b380-19a50e508d22",
       "name": "Marcar buffer DONE (admin)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1420,
-        160
+        2624,
+        368
       ],
-      "parameters": {
-        "operation": "update",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "inbox_buffer!A1:I",
-        "key": "message_id",
-        "value": "={{$json.message_id}}",
-        "options": {
-          "dataToSend": "autoMapInputData"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     },
     {
-      "id": "filter_done_admin",
-      "name": "Filtrar DONE (admin)",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 2,
-      "position": [
-        1380,
-        160
-      ],
       "parameters": {
-        "options": {
-          "keepOnlySet": true
-        },
         "values": {
           "string": [
             {
@@ -429,46 +602,60 @@
               "value": "={{$json.batch_id}}"
             }
           ]
-        }
-      }
+        },
+        "options": {}
+      },
+      "id": "105bd2de-45a9-4f93-a71e-ce330d8d7786",
+      "name": "Filtrar DONE (admin)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        2592,
+        368
+      ]
     },
     {
-      "id": "read_clientes",
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "b8005a7a-1c74-4409-a5b9-980a0354a8d9",
       "name": "Read clientes",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        -320,
-        320
+        880,
+        528
       ],
-      "parameters": {
-        "operation": "read",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "clientes!A1:M"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
-      "id": "match_cliente",
+      "parameters": {
+        "jsCode": "const clientes = items.map(i => i.json);\nconst batch = ($items('Agrupar y debounce')[0] || {}).json || {};\nconst wa = batch.whatsapp || '';\nconst cliente = clientes.find(c => c.whatsapp === wa) || null;\nreturn [{ json: { ...batch, cliente } }];"
+      },
+      "id": "d35e1b93-4110-416d-9525-e22323cdd0e8",
       "name": "Buscar cliente",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -100,
-        320
-      ],
-      "parameters": {
-        "jsCode": "const clientes = items.map(i => i.json);\nconst batch = ($items('Agrupar y debounce')[0] || {}).json || {};\nconst wa = batch.whatsapp || '';\nconst cliente = clientes.find(c => c.whatsapp === wa) || null;\nreturn [{ json: { ...batch, cliente } }];"
-      }
+        1104,
+        528
+      ]
     },
     {
-      "id": "if_cliente",
-      "name": "IF Cliente existe",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        120,
-        320
-      ],
       "parameters": {
         "conditions": {
           "boolean": [
@@ -477,96 +664,115 @@
               "value2": true
             }
           ]
-        }
-      }
+        },
+        "options": {}
+      },
+      "id": "57ec05ad-d36f-4ec1-b23e-319f90ce7a59",
+      "name": "IF Cliente existe",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        528
+      ]
     },
     {
-      "id": "send_new_client",
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "b098cced-f709-4c42-b022-248f79116708",
       "name": "Enviar alta cliente",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        340,
-        220
+        1552,
+        432
       ],
-      "parameters": {
-        "url": "={{$env.WHATSAPP_API_URL}}",
-        "method": "POST",
-        "sendBody": true,
-        "jsonParameters": true,
-        "options": {
-          "timeout": 10000,
-          "includeInputData": true
-        },
-        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"Hola, para poder ayudarte necesito registrarte. Indícame tu nombre completo y plan.\"}\n}",
-        "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
-      },
       "continueOnFail": true
     },
     {
-      "id": "build_log_new",
+      "parameters": {
+        "jsCode": "return [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: 'NUEVO_CLIENTE',\n  resumen: 'Solicitud de alta enviada',\n  message_key: '',\n  status_envio: 'OK',\n  error_envio: ''\n} }];"
+      },
+      "id": "0f3ddb12-fc09-4baa-841a-67885bea567a",
       "name": "Preparar log nuevo",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        560,
-        220
-      ],
-      "parameters": {
-        "jsCode": "return [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: 'NUEVO_CLIENTE',\n  resumen: 'Solicitud de alta enviada',\n  message_key: '',\n  status_envio: 'OK',\n  error_envio: ''\n} }];"
-      }
+        1760,
+        432
+      ]
     },
     {
-      "id": "log_new_client",
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "0f4296a3-eb15-4fdf-acfd-c5cc423c4baf",
       "name": "Log nuevo cliente",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        780,
-        220
+        1984,
+        432
       ],
-      "parameters": {
-        "operation": "append",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "mensajes_log!A1:H",
-        "options": {
-          "valueInputMode": "USER_ENTERED"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     },
     {
-      "id": "mark_buffer_done_new",
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "78b6f216-04df-402c-acab-540c5b8302f9",
       "name": "Marcar buffer DONE (nuevo)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1000,
-        220
+        2208,
+        432
       ],
-      "parameters": {
-        "operation": "update",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "inbox_buffer!A1:I",
-        "key": "message_id",
-        "value": "={{$json.message_id}}",
-        "options": {
-          "dataToSend": "autoMapInputData"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     },
     {
-      "id": "filter_done_new",
-      "name": "Filtrar DONE (nuevo)",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 2,
-      "position": [
-        960,
-        220
-      ],
       "parameters": {
-        "options": {
-          "keepOnlySet": true
-        },
         "values": {
           "string": [
             {
@@ -582,82 +788,97 @@
               "value": "={{$json.batch_id}}"
             }
           ]
-        }
-      }
+        },
+        "options": {}
+      },
+      "id": "14d6055c-cdb4-4d8e-8ddd-39a3d4ac10e0",
+      "name": "Filtrar DONE (nuevo)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        432
+      ]
     },
     {
-      "id": "read_logs",
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "9168d87d-6511-4114-a89a-47c3f399d0db",
       "name": "Read mensajes_log",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        340,
-        420
+        1552,
+        624
       ],
-      "parameters": {
-        "operation": "read",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "mensajes_log!A1:H"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
-      "id": "build_context",
+      "parameters": {
+        "jsCode": "const cliente = $json.cliente;\nconst logs = $items('Read mensajes_log').map(i => i.json).filter(l => l.whatsapp === $json.whatsapp);\nconst lastLogs = logs.slice(-10);\nconst systemPrompt = 'Eres asistente de cobros y atención. Responde corto, claro, cordial. No inventes pagos. Si falta info, pregunta. No cambies de tema. Mantente en contexto del negocio. Si el usuario envía varios mensajes unidos, respóndelos juntos.';\nconst context = { cliente: cliente || {}, ultimos_mensajes: lastLogs };\nreturn [{ json: { ...$json, system_prompt: systemPrompt, context_json: JSON.stringify(context), user_input: $json.combined_text || '' } }];"
+      },
+      "id": "f2264c12-17d5-4ec3-93d9-7b8f359505d0",
       "name": "Construir contexto",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        560,
-        420
-      ],
-      "parameters": {
-        "jsCode": "const cliente = $json.cliente;\nconst logs = $items('Read mensajes_log').map(i => i.json).filter(l => l.whatsapp === $json.whatsapp);\nconst lastLogs = logs.slice(-10);\nconst systemPrompt = 'Eres asistente de cobros y atención. Responde corto, claro, cordial. No inventes pagos. Si falta info, pregunta. No cambies de tema. Mantente en contexto del negocio. Si el usuario envía varios mensajes unidos, respóndelos juntos.';\nconst context = { cliente: cliente || {}, ultimos_mensajes: lastLogs };\nreturn [{ json: { ...$json, system_prompt: systemPrompt, context_json: JSON.stringify(context), user_input: $json.combined_text || '' } }];"
-      }
+        1760,
+        624
+      ]
     },
     {
-      "id": "openai_text",
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "7bf17bc4-7ac2-436b-b27f-8e1e8f3b049e",
       "name": "OpenAI Texto",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        780,
-        420
+        1984,
+        624
       ],
-      "parameters": {
-        "url": "https://api.openai.com/v1/responses",
-        "method": "POST",
-        "sendBody": true,
-        "jsonParameters": true,
-        "options": {
-          "timeout": 20000,
-          "includeInputData": true
-        },
-        "bodyParametersJson": "={\n  \"model\": \"{{$env.OPENAI_MODEL_TEXT}}\",\n  \"input\": [\n    {\"role\": \"system\", \"content\": [{\"type\": \"text\", \"text\": \"{{$json.system_prompt}}\"}]},\n    {\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"Contexto: {{$json.context_json}}\"}]},\n    {\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"Mensaje: {{$json.user_input}}\"}]}\n  ]\n}",
-        "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.OPENAI_API_KEY}}\"\n}"
-      },
       "continueOnFail": true
     },
     {
-      "id": "extract_ai_text",
+      "parameters": {
+        "jsCode": "const fallback = 'Gracias por tu mensaje. ¿Podrías darme más detalles?';\nconst error = $json.error || ($json.response && $json.response.error) || null;\nconst outputText = ($json.output_text || '').trim();\nconst outputs = Array.isArray($json.output) ? $json.output : [];\nconst contentText = outputs\n  .flatMap(o => Array.isArray(o.content) ? o.content : [])\n  .map(c => (c.text || c.output_text || '').trim())\n  .filter(Boolean)\n  .join('\n');\nconst reply = (outputText || contentText || fallback).trim();\nconst openaiFailed = !!error || (!outputText && !contentText);\nconst errorMessage = error ? (error.message || JSON.stringify(error)) : (openaiFailed ? 'OpenAI response missing output_text/output.' : '');\nreturn [{ json: { ...$json, ai_reply: reply, openai_failed: openaiFailed, openai_error: errorMessage } }];"
+      },
+      "id": "e2b76b6d-5ff1-402d-bacf-9b424052a11f",
       "name": "Extraer respuesta IA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1000,
-        420
-      ],
-      "parameters": {
-        "jsCode": "const fallback = 'Gracias por tu mensaje. ¿Podrías darme más detalles?';\nconst error = $json.error || ($json.response && $json.response.error) || null;\nconst outputText = ($json.output_text || '').trim();\nconst outputs = Array.isArray($json.output) ? $json.output : [];\nconst contentText = outputs\n  .flatMap(o => Array.isArray(o.content) ? o.content : [])\n  .map(c => (c.text || c.output_text || '').trim())\n  .filter(Boolean)\n  .join('\n');\nconst reply = (outputText || contentText || fallback).trim();\nconst openaiFailed = !!error || (!outputText && !contentText);\nconst errorMessage = error ? (error.message || JSON.stringify(error)) : (openaiFailed ? 'OpenAI response missing output_text/output.' : '');\nreturn [{ json: { ...$json, ai_reply: reply, openai_failed: openaiFailed, openai_error: errorMessage } }];"
-      }
+        2208,
+        624
+      ]
     },
     {
-      "id": "if_has_image",
-      "name": "IF Tiene imagen",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        1220,
-        420
-      ],
       "parameters": {
         "conditions": {
           "boolean": [
@@ -666,110 +887,103 @@
               "value2": true
             }
           ]
-        }
-      }
+        },
+        "options": {}
+      },
+      "id": "fd6fcf0e-6d0f-48f4-babd-88f2c2c0e80a",
+      "name": "IF Tiene imagen",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2432,
+        624
+      ]
     },
     {
-      "id": "get_media_url",
+      "parameters": {
+        "url": "={{$env.WHATSAPP_GRAPH_URL}}/{{$json.media_ids[0]}}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "6972568c-b1f4-4e6c-85dc-ba65ff571e1d",
       "name": "Get media url",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1440,
-        340
+        2640,
+        544
       ],
-      "parameters": {
-        "url": "={{$env.WHATSAPP_GRAPH_URL}}/{{$json.media_ids[0]}}",
-        "method": "GET",
-        "sendBody": false,
-        "options": {
-          "timeout": 10000,
-          "includeInputData": true
-        },
-        "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
-      },
       "continueOnFail": true
     },
     {
-      "id": "download_media",
+      "parameters": {
+        "url": "={{$json.url}}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "f8d4bbe0-e8a3-433d-b211-b2e1fe6faf90",
       "name": "Download media",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1660,
-        340
+        2864,
+        544
       ],
-      "parameters": {
-        "url": "={{$json.url}}",
-        "method": "GET",
-        "sendBody": false,
-        "responseFormat": "file",
-        "options": {
-          "timeout": 20000,
-          "includeInputData": true
-        },
-        "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
-      },
       "continueOnFail": true
     },
     {
-      "id": "prepare_image",
+      "parameters": {
+        "jsCode": "const bin = $binary.data;\nif (!bin) return [{ json: { ...$json, image_data_url: '' } }];\nconst mime = bin.mimeType || 'image/jpeg';\nconst dataUrl = `data:${mime};base64,${bin.data}`;\nreturn [{ json: { ...$json, image_data_url: dataUrl } }];"
+      },
+      "id": "10a1f90e-a7b0-4cca-a525-af5730b38670",
       "name": "Preparar imagen",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1860,
-        340
-      ],
-      "parameters": {
-        "jsCode": "const bin = $binary.data;\nif (!bin) return [{ json: { ...$json, image_data_url: '' } }];\nconst mime = bin.mimeType || 'image/jpeg';\nconst dataUrl = `data:${mime};base64,${bin.data}`;\nreturn [{ json: { ...$json, image_data_url: dataUrl } }];"
-      }
+        3072,
+        544
+      ]
     },
     {
-      "id": "openai_vision",
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {
+          "timeout": 25000
+        }
+      },
+      "id": "6b9d28ce-d872-450c-9498-4580b4b79db2",
       "name": "OpenAI Vision",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        2060,
-        340
+        3264,
+        544
       ],
-      "parameters": {
-        "url": "https://api.openai.com/v1/responses",
-        "method": "POST",
-        "sendBody": true,
-        "jsonParameters": true,
-        "options": {
-          "timeout": 25000,
-          "includeInputData": true
-        },
-        "bodyParametersJson": "={\n  \"model\": \"{{$env.OPENAI_MODEL_VISION}}\",\n  \"input\": [\n    {\"role\": \"system\", \"content\": [{\"type\": \"text\", \"text\": \"Extrae SOLO JSON estrictamente válido con: {monto, moneda, fecha, hora, referencia, entidad, titular, concepto, confidence_0_100, notas}. Sin texto extra.\"}]},\n    {\"role\": \"user\", \"content\": [\n      {\"type\": \"input_text\", \"text\": \"Lee el comprobante y devuelve JSON.\"},\n      {\"type\": \"input_image\", \"image_url\": \"{{$json.image_data_url}}\"}\n    ]}\n  ]\n}",
-        "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.OPENAI_API_KEY}}\"\n}"
-      },
       "continueOnFail": true
     },
     {
-      "id": "validate_vision",
+      "parameters": {
+        "jsCode": "const cliente = $json.cliente;\nlet parsed = null;\ntry {\n  const outputText = ($json.output_text || '').trim();\n  const outputs = Array.isArray($json.output) ? $json.output : [];\n  const contentText = outputs\n    .flatMap(o => Array.isArray(o.content) ? o.content : [])\n    .map(c => (c.text || c.output_text || '').trim())\n    .filter(Boolean)\n    .join('');\n  const raw = outputText || contentText || '';\n  parsed = raw ? JSON.parse(raw) : null;\n} catch (e) {\n  parsed = null;\n}\nconst monto = Number(parsed && parsed.monto ? parsed.monto : 0);\nconst esperado = Number(cliente && cliente.monto_mensual ? cliente.monto_mensual : 0);\nconst diffOk = esperado ? (Math.abs(monto - esperado) / esperado) <= 0.05 : true;\nconst conf = Number(parsed && parsed.confidence_0_100 ? parsed.confidence_0_100 : 0);\nconst ok = parsed && conf >= 80 && diffOk;\nreturn [{ json: { ...$json, vision_data: parsed, vision_ok: !!ok } }];"
+      },
+      "id": "f2a3f725-08c4-4dc8-a7f5-1f32b287b5e1",
       "name": "Validar comprobante",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2280,
-        340
-      ],
-      "parameters": {
-        "jsCode": "const cliente = $json.cliente;\nlet parsed = null;\ntry {\n  const outputText = ($json.output_text || '').trim();\n  const outputs = Array.isArray($json.output) ? $json.output : [];\n  const contentText = outputs\n    .flatMap(o => Array.isArray(o.content) ? o.content : [])\n    .map(c => (c.text || c.output_text || '').trim())\n    .filter(Boolean)\n    .join('');\n  const raw = outputText || contentText || '';\n  parsed = raw ? JSON.parse(raw) : null;\n} catch (e) {\n  parsed = null;\n}\nconst monto = Number(parsed && parsed.monto ? parsed.monto : 0);\nconst esperado = Number(cliente && cliente.monto_mensual ? cliente.monto_mensual : 0);\nconst diffOk = esperado ? (Math.abs(monto - esperado) / esperado) <= 0.05 : true;\nconst conf = Number(parsed && parsed.confidence_0_100 ? parsed.confidence_0_100 : 0);\nconst ok = parsed && conf >= 80 && diffOk;\nreturn [{ json: { ...$json, vision_data: parsed, vision_ok: !!ok } }];"
-      }
+        3488,
+        544
+      ]
     },
     {
-      "id": "if_vision_ok",
-      "name": "IF Visión OK",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        2500,
-        340
-      ],
       "parameters": {
         "conditions": {
           "boolean": [
@@ -778,198 +992,229 @@
               "value2": true
             }
           ]
-        }
-      }
+        },
+        "options": {}
+      },
+      "id": "035b9b14-ca86-4cbc-b83e-c5bbe9108159",
+      "name": "IF Visión OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3712,
+        544
+      ]
     },
     {
-      "id": "prepare_payment",
+      "parameters": {
+        "jsCode": "const v = $json.vision_data || {};\nconst pagoId = `pago_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;\nreturn [{ json: {\n  pago_id: pagoId,\n  cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n  timestamp_creado: new Date().toISOString(),\n  fecha_pago: v.fecha || '',\n  monto: v.monto || '',\n  moneda: v.moneda || '',\n  entidad: v.entidad || '',\n  referencia: v.referencia || '',\n  estado: 'PENDIENTE_CONFIRMACION',\n  confidence: v.confidence_0_100 || '',\n  validado_por: 'IA',\n  nota: v.notas || ''\n} }];"
+      },
+      "id": "d3da40af-dbce-49e3-8a3c-d43e4a808b65",
       "name": "Preparar pago",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2720,
-        260
-      ],
-      "parameters": {
-        "jsCode": "const v = $json.vision_data || {};\nconst pagoId = `pago_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;\nreturn [{ json: {\n  pago_id: pagoId,\n  cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n  timestamp_creado: new Date().toISOString(),\n  fecha_pago: v.fecha || '',\n  monto: v.monto || '',\n  moneda: v.moneda || '',\n  entidad: v.entidad || '',\n  referencia: v.referencia || '',\n  estado: 'PENDIENTE_CONFIRMACION',\n  confidence: v.confidence_0_100 || '',\n  validado_por: 'IA',\n  nota: v.notas || ''\n} }];"
-      }
+        3920,
+        464
+      ]
     },
     {
-      "id": "append_pago",
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "418cc2f2-857e-4df9-ab8e-f7dc45b1251d",
       "name": "Crear pago pendiente",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        2940,
-        260
+        4144,
+        464
       ],
-      "parameters": {
-        "operation": "append",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "pagos!A1:L",
-        "options": {
-          "valueInputMode": "USER_ENTERED"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     },
     {
-      "id": "notify_owner_payment",
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "1cb1ad1d-2af9-4656-b55d-ef19fb89a9f9",
       "name": "Avisar owner",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        3160,
-        260
+        4368,
+        464
       ],
-      "parameters": {
-        "url": "={{$env.WHATSAPP_API_URL}}",
-        "method": "POST",
-        "sendBody": true,
-        "jsonParameters": true,
-        "options": {
-          "timeout": 10000,
-          "includeInputData": true
-        },
-        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$env.OWNER_WHATSAPP}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"Pago pendiente creado. ID: {{$json.pago_id}}\\nCONFIRMAR PAGO <pago_id>\\nRECHAZAR PAGO <pago_id>\"}\n}",
-        "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
-      },
       "continueOnFail": true
     },
     {
-      "id": "notify_client_pending",
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "d8e8d8ea-39ef-43b3-ba5d-531557b55783",
       "name": "Avisar cliente pending",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        3380,
-        260
+        4592,
+        464
       ],
-      "parameters": {
-        "url": "={{$env.WHATSAPP_API_URL}}",
-        "method": "POST",
-        "sendBody": true,
-        "jsonParameters": true,
-        "options": {
-          "timeout": 10000,
-          "includeInputData": true
-        },
-        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"Recibí tu comprobante ✅ lo estoy verificando y te confirmo en breve.\"}\n}",
-        "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
-      },
       "continueOnFail": true
     },
     {
-      "id": "ask_more_info",
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "b694bb70-7644-4d5a-97fb-a9424b0358d3",
       "name": "Pedir datos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        2720,
-        420
+        3920,
+        624
       ],
-      "parameters": {
-        "url": "={{$env.WHATSAPP_API_URL}}",
-        "method": "POST",
-        "sendBody": true,
-        "jsonParameters": true,
-        "options": {
-          "timeout": 10000,
-          "includeInputData": true
-        },
-        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"No pude verificar el comprobante. ¿Podrías enviar una captura más clara o indicar monto, fecha y referencia?\"}\n}",
-        "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
-      },
       "continueOnFail": true
     },
     {
-      "id": "send_ai_reply",
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "4df3fe6a-83a5-43f4-93ff-6603ac98867b",
       "name": "Enviar respuesta IA",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1440,
-        520
+        2640,
+        720
       ],
-      "parameters": {
-        "url": "={{$env.WHATSAPP_API_URL}}",
-        "method": "POST",
-        "sendBody": true,
-        "jsonParameters": true,
-        "options": {
-          "timeout": 10000,
-          "includeInputData": true
-        },
-        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"{{$json.ai_reply}}\"}\n}",
-        "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
-      },
       "continueOnFail": true
     },
     {
-      "id": "clean_last_contact_payload",
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    cliente_id: $json.cliente?.cliente_id || '',\n    ultimo_contacto: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "35eed808-26c7-45f2-bcf1-cf6b8fcb9eb0",
       "name": "Payload ultimo_contacto limpio",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1540,
-        520
-      ],
-      "parameters": {
-        "jsCode": "return [{\n  json: {\n    cliente_id: $json.cliente?.cliente_id || '',\n    ultimo_contacto: new Date().toISOString()\n  }\n}];"
-      }
+        2752,
+        720
+      ]
     },
     {
-      "id": "update_last_contact",
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "0bcdae80-29dd-4c49-a203-06b6b3ebc97b",
       "name": "Actualizar ultimo_contacto",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1660,
-        520
+        2864,
+        720
       ],
-      "parameters": {
-        "operation": "update",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "clientes!A1:M",
-        "key": "cliente_id",
-        "value": "={{$json.cliente_id}}",
-        "options": {
-          "dataToSend": "autoMapInputData"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     },
     {
-      "id": "mark_buffer_done_client",
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "e194977a-3685-4929-b943-1392f5767ef0",
       "name": "Marcar buffer DONE (cliente)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1880,
-        520
+        3088,
+        720
       ],
-      "parameters": {
-        "operation": "update",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "inbox_buffer!A1:I",
-        "key": "message_id",
-        "value": "={{$json.message_id}}",
-        "options": {
-          "dataToSend": "autoMapInputData"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     },
     {
-      "id": "filter_done_client",
-      "name": "Filtrar DONE (cliente)",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 2,
-      "position": [
-        1840,
-        520
-      ],
       "parameters": {
-        "options": {
-          "keepOnlySet": true
-        },
         "values": {
           "string": [
             {
@@ -985,331 +1230,400 @@
               "value": "={{$json.batch_id}}"
             }
           ]
-        }
-      }
+        },
+        "options": {}
+      },
+      "id": "975018de-1b1a-4e52-9fc4-f4a3f4624682",
+      "name": "Filtrar DONE (cliente)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        3040,
+        720
+      ]
     },
     {
-      "id": "cron_reminders",
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "hour": 9
+            }
+          ]
+        }
+      },
+      "id": "ba894695-beb6-48be-8b39-e7e0c5eae4d4",
       "name": "Cron Recordatorios",
       "type": "n8n-nodes-base.cron",
       "typeVersion": 1,
       "position": [
-        -1200,
-        640
-      ],
-      "parameters": {
-        "triggerTimes": {
-          "item": [
-            {
-              "mode": "everyDay",
-              "hour": 9,
-              "minute": 0
-            }
-          ]
-        }
-      }
+        0,
+        848
+      ]
     },
     {
-      "id": "read_clientes_reminders",
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "d8d1fcfc-c138-4d2d-9f4c-7670c6e75df8",
       "name": "Read clientes (recordatorios)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        -980,
-        640
+        224,
+        848
       ],
-      "parameters": {
-        "operation": "read",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "clientes!A1:M"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
-      "id": "read_logs_reminders",
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "f1b8408a-233f-4233-bcdd-00014dde63cd",
       "name": "Read logs (recordatorios)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        -760,
-        640
+        448,
+        848
       ],
-      "parameters": {
-        "operation": "read",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "mensajes_log!A1:H"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
-      "id": "build_reminders",
+      "parameters": {
+        "jsCode": "const clientes = $items('Read clientes (recordatorios)').map(i => i.json);\nconst logs = $items('Read logs (recordatorios)').map(i => i.json);\nconst now = new Date();\n\nconst types = [\n  { name: 'RECORDATORIO_7D', diff: 7 },\n  { name: 'RECORDATORIO_2D', diff: 2 },\n  { name: 'VENCE_HOY', diff: 0 },\n  { name: 'SEGUIMIENTO_3D', diff: -3 },\n  { name: 'SEGUIMIENTO_7D', diff: -7 },\n  { name: 'MOROSO_14D', diff: -14 }\n];\n\nconst out = [];\nfor (const c of clientes) {\n  if (c.estado !== 'ACTIVO' || c.consentimiento_mensajes !== 'SI') continue;\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  if (!venc) continue;\n  const diffDays = Math.floor((venc - now) / (1000 * 60 * 60 * 24));\n  const match = types.find(t => diffDays === t.diff);\n  if (!match) continue;\n\n  const messageKey = `${c.cliente_id}_${match.name}_${c.proximo_vencimiento}`;\n  const already = logs.find(l => l.message_key === messageKey);\n  if (already) continue;\n\n  out.push({\n    json: {\n      cliente: c,\n      tipo_mensaje: match.name,\n      message_key: messageKey,\n      texto: `Hola ${c.nombre}, recordatorio: tu pago vence el ${c.proximo_vencimiento}. Si ya pagaste, ignora este mensaje.`\n    }\n  });\n}\n\nreturn out;"
+      },
+      "id": "7ccbe10f-7e35-47de-8aab-4a3fcb27466a",
       "name": "Construir recordatorios",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -540,
-        640
-      ],
-      "parameters": {
-        "jsCode": "const clientes = $items('Read clientes (recordatorios)').map(i => i.json);\nconst logs = $items('Read logs (recordatorios)').map(i => i.json);\nconst now = new Date();\n\nconst types = [\n  { name: 'RECORDATORIO_7D', diff: 7 },\n  { name: 'RECORDATORIO_2D', diff: 2 },\n  { name: 'VENCE_HOY', diff: 0 },\n  { name: 'SEGUIMIENTO_3D', diff: -3 },\n  { name: 'SEGUIMIENTO_7D', diff: -7 },\n  { name: 'MOROSO_14D', diff: -14 }\n];\n\nconst out = [];\nfor (const c of clientes) {\n  if (c.estado !== 'ACTIVO' || c.consentimiento_mensajes !== 'SI') continue;\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  if (!venc) continue;\n  const diffDays = Math.floor((venc - now) / (1000 * 60 * 60 * 24));\n  const match = types.find(t => diffDays === t.diff);\n  if (!match) continue;\n\n  const messageKey = `${c.cliente_id}_${match.name}_${c.proximo_vencimiento}`;\n  const already = logs.find(l => l.message_key === messageKey);\n  if (already) continue;\n\n  out.push({\n    json: {\n      cliente: c,\n      tipo_mensaje: match.name,\n      message_key: messageKey,\n      texto: `Hola ${c.nombre}, recordatorio: tu pago vence el ${c.proximo_vencimiento}. Si ya pagaste, ignora este mensaje.`\n    }\n  });\n}\n\nreturn out;"
-      }
+        672,
+        848
+      ]
     },
     {
-      "id": "send_reminder",
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "44b7948f-51da-42aa-9809-1fe7106001c1",
       "name": "Enviar recordatorio",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        -320,
-        640
+        880,
+        848
       ],
-      "parameters": {
-        "url": "={{$env.WHATSAPP_API_URL}}",
-        "method": "POST",
-        "sendBody": true,
-        "jsonParameters": true,
-        "options": {
-          "timeout": 10000,
-          "includeInputData": true
-        },
-        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.cliente.whatsapp}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"{{$json.texto}}\"}\n}",
-        "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
-      },
       "continueOnFail": true
     },
     {
-      "id": "build_log_reminder",
+      "parameters": {
+        "jsCode": "return [{ json: { timestamp: new Date().toISOString(), cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '', whatsapp: $json.cliente && $json.cliente.whatsapp ? $json.cliente.whatsapp : '', tipo_mensaje: $json.tipo_mensaje || '', resumen: ($json.texto || '').slice(0, 120), message_key: $json.message_key || '', status_envio: 'OK', error_envio: '' } }];"
+      },
+      "id": "7913c4c8-5fb4-4937-978b-86c3a302fb7b",
       "name": "Preparar log recordatorio",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -100,
-        720
-      ],
-      "parameters": {
-        "jsCode": "return [{ json: { timestamp: new Date().toISOString(), cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '', whatsapp: $json.cliente && $json.cliente.whatsapp ? $json.cliente.whatsapp : '', tipo_mensaje: $json.tipo_mensaje || '', resumen: ($json.texto || '').slice(0, 120), message_key: $json.message_key || '', status_envio: 'OK', error_envio: '' } }];"
-      }
+        1104,
+        928
+      ]
     },
     {
-      "id": "log_reminder",
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "a128f5b6-c196-4c13-811a-08dfede64543",
       "name": "Log recordatorio",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        -100,
-        640
+        1104,
+        848
       ],
-      "parameters": {
-        "operation": "append",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "mensajes_log!A1:H",
-        "options": {
-          "valueInputMode": "USER_ENTERED"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     },
     {
-      "id": "cron_reports",
-      "name": "Cron Reportes",
-      "type": "n8n-nodes-base.cron",
-      "typeVersion": 1,
-      "position": [
-        -1200,
-        880
-      ],
       "parameters": {
         "triggerTimes": {
           "item": [
             {
-              "mode": "everyDay",
-              "hour": 7,
-              "minute": 0
+              "hour": 7
             },
             {
               "mode": "everyWeek",
-              "weekday": "monday",
               "hour": 8,
-              "minute": 0
+              "weekday": "monday"
             }
           ]
         }
-      }
+      },
+      "id": "a337e9d4-cefb-4861-a4f4-fa42ef41a0ec",
+      "name": "Cron Reportes",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1088
+      ]
     },
     {
-      "id": "read_clientes_reports",
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "291740d9-3f69-490e-89bd-4880567004b3",
       "name": "Read clientes (reportes)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        -980,
-        880
+        224,
+        1088
       ],
-      "parameters": {
-        "operation": "read",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "clientes!A1:M"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
-      "id": "build_report",
+      "parameters": {
+        "jsCode": "const clientes = items.map(i => i.json).filter(c => c.estado === 'ACTIVO');\nconst now = new Date();\nlet porVencer = 0;\nlet venceHoy = 0;\nlet vencidos1a7 = 0;\nlet morosos = 0;\nlet montoEsperado = 0;\n\nfor (const c of clientes) {\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  if (!venc) continue;\n  const diff = Math.floor((venc - now) / (1000 * 60 * 60 * 24));\n  if (diff >= 0 && diff <= 2) porVencer += 1;\n  if (diff === 0) venceHoy += 1;\n  if (diff < 0 && diff >= -7) vencidos1a7 += 1;\n  if (diff <= -8) morosos += 1;\n  montoEsperado += Number(c.monto_mensual || 0);\n}\n\nconst texto = `Reporte: Activos ${clientes.length}. Por vencer (0-2): ${porVencer}. Vence hoy: ${venceHoy}. Vencidos 1-7: ${vencidos1a7}. Morosos 8+: ${morosos}. Monto esperado: ${montoEsperado}.`;\nreturn [{ json: { texto } }];"
+      },
+      "id": "c7e2258e-a8ec-4713-a401-67b24ea70b08",
       "name": "Construir reporte",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -760,
-        880
-      ],
-      "parameters": {
-        "jsCode": "const clientes = items.map(i => i.json).filter(c => c.estado === 'ACTIVO');\nconst now = new Date();\nlet porVencer = 0;\nlet venceHoy = 0;\nlet vencidos1a7 = 0;\nlet morosos = 0;\nlet montoEsperado = 0;\n\nfor (const c of clientes) {\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  if (!venc) continue;\n  const diff = Math.floor((venc - now) / (1000 * 60 * 60 * 24));\n  if (diff >= 0 && diff <= 2) porVencer += 1;\n  if (diff === 0) venceHoy += 1;\n  if (diff < 0 && diff >= -7) vencidos1a7 += 1;\n  if (diff <= -8) morosos += 1;\n  montoEsperado += Number(c.monto_mensual || 0);\n}\n\nconst texto = `Reporte: Activos ${clientes.length}. Por vencer (0-2): ${porVencer}. Vence hoy: ${venceHoy}. Vencidos 1-7: ${vencidos1a7}. Morosos 8+: ${morosos}. Monto esperado: ${montoEsperado}.`;\nreturn [{ json: { texto } }];"
-      }
+        448,
+        1088
+      ]
     },
     {
-      "id": "send_report",
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHATSAPP_API_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "c00c5dc5-7888-4b40-8d56-b267fc3b8d95",
       "name": "Enviar reporte",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        -540,
-        880
+        672,
+        1088
       ],
-      "parameters": {
-        "url": "={{$env.WHATSAPP_API_URL}}",
-        "method": "POST",
-        "sendBody": true,
-        "jsonParameters": true,
-        "options": {
-          "timeout": 10000,
-          "includeInputData": true
-        },
-        "bodyParametersJson": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$env.OWNER_WHATSAPP}}\",\n  \"type\": \"text\",\n  \"text\": {\"body\": \"{{$json.texto}}\"}\n}",
-        "headerParametersJson": "={\n  \"Authorization\": \"Bearer {{$env.WHATSAPP_TOKEN}}\"\n}"
-      },
       "continueOnFail": true
     },
     {
-      "id": "build_log_report",
+      "parameters": {
+        "jsCode": "return [{ json: { timestamp: new Date().toISOString(), cliente_id: '', whatsapp: $env.OWNER_WHATSAPP || '', tipo_mensaje: 'REPORTE', resumen: ($json.texto || '').slice(0, 120), message_key: '', status_envio: 'OK', error_envio: '' } }];"
+      },
+      "id": "c0c265f3-d228-4788-97fe-4045d823037d",
       "name": "Preparar log reporte",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -320,
-        960
-      ],
-      "parameters": {
-        "jsCode": "return [{ json: { timestamp: new Date().toISOString(), cliente_id: '', whatsapp: $env.OWNER_WHATSAPP || '', tipo_mensaje: 'REPORTE', resumen: ($json.texto || '').slice(0, 120), message_key: '', status_envio: 'OK', error_envio: '' } }];"
-      }
+        880,
+        1168
+      ]
     },
     {
-      "id": "log_report",
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "dde86df4-dc60-4db0-bdf2-57cc709e7c23",
       "name": "Log reporte",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        -320,
-        880
+        880,
+        1088
       ],
-      "parameters": {
-        "operation": "append",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "mensajes_log!A1:H",
-        "options": {
-          "valueInputMode": "USER_ENTERED"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     },
     {
-      "id": "build_buffer_done_admin",
+      "parameters": {
+        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
+      },
+      "id": "144a0421-abfc-4de7-aeea-8d003f3cde5a",
       "name": "Preparar buffer DONE (admin)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1280,
-        160
-      ],
-      "parameters": {
-        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
-      }
+        2480,
+        368
+      ]
     },
     {
-      "id": "build_buffer_done_new",
+      "parameters": {
+        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
+      },
+      "id": "6f9a13ce-1b9c-4eb8-af36-0bf704f2ce2a",
       "name": "Preparar buffer DONE (nuevo)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        920,
-        220
-      ],
-      "parameters": {
-        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
-      }
+        2128,
+        432
+      ]
     },
     {
-      "id": "build_buffer_done_client",
+      "parameters": {
+        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
+      },
+      "id": "53392984-6fc9-4a34-93a3-27feaf7b2131",
       "name": "Preparar buffer DONE (cliente)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1760,
-        520
-      ],
-      "parameters": {
-        "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
-      }
+        2960,
+        720
+      ]
     },
     {
-      "id": "switch_admin_update",
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json.update && $json.update.sheet ? $json.update.sheet : ''}}"
+      },
+      "id": "aca73b63-36fa-48c1-9ad8-b59ad15e361c",
       "name": "Switch update.sheet",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 2,
       "position": [
-        540,
-        80
-      ],
-      "parameters": {
-        "dataType": "string",
-        "value1": "={{$json.update && $json.update.sheet ? $json.update.sheet : ''}}",
-        "rules": [
-          {
-            "operation": "equals",
-            "value2": "clientes"
-          },
-          {
-            "operation": "equals",
-            "value2": "pagos"
-          }
-        ]
-      }
+        1744,
+        288
+      ]
     },
     {
-      "id": "build_log_ai",
+      "parameters": {
+        "jsCode": "const resumen = ($json.ai_reply || '').slice(0, 120);\nconst status = $json.openai_failed ? 'ERROR' : 'OK';\nconst errorEnvio = $json.openai_failed ? ($json.openai_error || 'OpenAI error') : '';\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: 'RESPUESTA_IA',\n  resumen,\n  message_key: '',\n  status_envio: status,\n  error_envio: errorEnvio\n} }];"
+      },
+      "id": "6c50aef2-c765-4786-928c-c4f397e2372c",
       "name": "Preparar log respuesta IA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1440,
-        640
-      ],
-      "parameters": {
-        "jsCode": "const resumen = ($json.ai_reply || '').slice(0, 120);\nconst status = $json.openai_failed ? 'ERROR' : 'OK';\nconst errorEnvio = $json.openai_failed ? ($json.openai_error || 'OpenAI error') : '';\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: 'RESPUESTA_IA',\n  resumen,\n  message_key: '',\n  status_envio: status,\n  error_envio: errorEnvio\n} }];"
-      }
+        2640,
+        848
+      ]
     },
     {
-      "id": "log_ai",
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "id": "1a6a7e32-476c-4e81-8432-171c9f312762",
       "name": "Log respuesta IA",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1660,
-        640
+        2864,
+        848
       ],
-      "parameters": {
-        "operation": "append",
-        "sheetId": "={{$env.GSHEET_ID}}",
-        "range": "mensajes_log!A1:H",
-        "options": {
-          "valueInputMode": "USER_ENTERED"
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ibyjaAr0Anzj6zY9",
+          "name": "Google Sheets account"
         }
       }
     }
   ],
+  "pinData": {},
   "connections": {
     "Webhook In": {
       "main": [
@@ -1978,31 +2292,6 @@
         ]
       ]
     },
-    "Switch update.sheet": {
-      "main": [
-        [
-          {
-            "node": "Update cliente",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Update pago",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Enviar WhatsApp owner",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Update cliente": {
       "main": [
         [
@@ -2035,13 +2324,19 @@
           }
         ]
       ]
-    },
-    "Log respuesta IA": {
-      "main": []
     }
   },
   "active": false,
   "settings": {
-    "timezone": "={{$env.TIMEZONE}}"
-  }
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "43b07634-088c-489d-8017-b4ffaecadf14",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "437eaedb457c8fcbb6da94c597f8ad77b927aa083445e4a31402725053a3292f"
+  },
+  "id": "Ow4yp_YYpKJLPE-kzkEKW",
+  "tags": []
 }
