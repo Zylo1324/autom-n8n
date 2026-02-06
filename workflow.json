@@ -417,7 +417,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const clientes = $items('Read clientes (admin)').map(i => i.json);\nconst pagos = $items('Read pagos (admin)').map(i => i.json);\nconst { action, args } = $json;\nlet response = 'Comando no reconocido.';\nlet update = null;\n\nconst findClienteById = (id) => clientes.find(c => c.cliente_id === id);\nconst findPagoById = (id) => pagos.find(p => p.pago_id === id);\n\nif (action === 'BUSCAR_CLIENTE') {\n  const q = (args[0] || '').toLowerCase();\n  const matches = clientes.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.whatsapp || '').includes(q));\n  response = matches.length ? matches.map(c => `${c.cliente_id} | ${c.nombre} | ${c.whatsapp} | ${c.estado}`).join('\n') : 'Sin resultados.';\n}\n\nif (action === 'CONFIRMAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado: 'CONFIRMADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} confirmado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'RECHAZAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado: 'RECHAZADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} rechazado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'ACTUALIZAR_LINK') {\n  const [clienteId, url] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && url) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { link_pago: url } };\n    response = `Link actualizado para ${clienteId}.`;\n  } else {\n    response = 'Cliente o URL inválido.';\n  }\n}\n\nif (action === 'SUSPENDER') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'SUSPENDIDO' } };\n    response = `Cliente ${clienteId} suspendido.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'ACTIVAR') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'ACTIVO' } };\n    response = `Cliente ${clienteId} activado.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'SET_VENCIMIENTO') {\n  const [clienteId, fecha] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && fecha) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { proximo_vencimiento: fecha } };\n    response = `Vencimiento actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nif (action === 'SET_MONTO') {\n  const [clienteId, monto] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && monto) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { monto_mensual: monto } };\n    response = `Monto actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nreturn [{ json: { ...$json, response, update } }];"
+        "jsCode": "const clientes = $items('Read clientes (admin)').map(i => i.json);\nconst pagos = $items('Read pagos (admin)').map(i => i.json);\nconst { action, args } = $json;\nlet response = 'Comando no reconocido.';\nlet update = null;\n\nconst findClienteById = (id) => clientes.find(c => c.cliente_id === id);\nconst findPagoById = (id) => pagos.find(p => p.pago_id === id);\n\nif (action === 'BUSCAR_CLIENTE') {\n  const q = (args[0] || '').toLowerCase();\n  const matches = clientes.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.whatsapp || '').includes(q));\n  response = matches.length ? matches.map(c => `${c.cliente_id} | ${c.nombre} | ${c.whatsapp} | ${c.estado}`).join('\n') : 'Sin resultados.';\n}\n\nif (action === 'CONFIRMAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado_pago: 'CONFIRMADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} confirmado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'RECHAZAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado_pago: 'RECHAZADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} rechazado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'ACTUALIZAR_LINK') {\n  const [clienteId, url] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && url) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { link_pago: url } };\n    response = `Link actualizado para ${clienteId}.`;\n  } else {\n    response = 'Cliente o URL inválido.';\n  }\n}\n\nif (action === 'SUSPENDER') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'SUSPENDIDO' } };\n    response = `Cliente ${clienteId} suspendido.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'ACTIVAR') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'ACTIVO' } };\n    response = `Cliente ${clienteId} activado.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'SET_VENCIMIENTO') {\n  const [clienteId, fecha] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && fecha) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { proximo_vencimiento: fecha } };\n    response = `Vencimiento actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nif (action === 'SET_MONTO') {\n  const [clienteId, monto] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && monto) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { monto_mensual: monto } };\n    response = `Monto actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nreturn [{ json: { ...$json, response, update } }];"
       },
       "id": "79df92ad-4dc5-4a7d-9439-6c075720f55d",
       "name": "Preparar acción admin",
@@ -584,7 +584,8 @@
             "monto": "={{$json.monto}}",
             "metodo_pago": "={{$json.metodo_pago}}",
             "fecha_pago": "={{$json.fecha_pago}}",
-            "estado_pago": "={{$json.estado_pago}}"
+            "estado_pago": "={{$json.estado_pago}}",
+            "validado_por": "={{$json.validado_por}}"
           },
           "matchingColumns": [
             "pago_id"
@@ -647,6 +648,15 @@
             {
               "id": "estado_pago",
               "displayName": "estado_pago",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "validado_por",
+              "displayName": "validado_por",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -1556,7 +1566,8 @@
             "monto": "={{$json.monto}}",
             "metodo_pago": "={{$json.metodo_pago}}",
             "fecha_pago": "={{$json.fecha_pago}}",
-            "estado_pago": "={{$json.estado_pago}}"
+            "estado_pago": "={{$json.estado_pago}}",
+            "validado_por": "={{$json.validado_por}}"
           },
           "matchingColumns": [],
           "schema": [
@@ -1617,6 +1628,15 @@
             {
               "id": "estado_pago",
               "displayName": "estado_pago",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "validado_por",
+              "displayName": "validado_por",
               "required": false,
               "defaultMatch": false,
               "display": true,
