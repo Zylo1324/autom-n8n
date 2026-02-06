@@ -109,20 +109,26 @@
         "documentId": {
           "__rl": true,
           "value": "1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg",
-          "mode": "list",
-          "cachedResultName": "inbox_buffer",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg/edit?usp=drivesdk"
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "inbox_buffer",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg/edit#gid=0"
+          "value": "inbox_buffer",
+          "mode": "list"
         },
         "columns": {
           "mappingMode": "defineBelow",
-          "value": {},
+          "value": {
+            "timestamp": "={{$json.timestamp}}",
+            "whatsapp": "={{$json.whatsapp}}",
+            "message_id": "={{$json.message_id}}",
+            "message_type": "={{$json.message_type}}",
+            "text": "={{$json.text}}",
+            "media_id": "={{$json.media_id}}",
+            "media_mime": "={{$json.media_mime}}",
+            "status": "={{$json.status}}",
+            "batch_id": "={{$json.batch_id}}"
+          },
           "matchingColumns": [],
           "schema": [
             {
@@ -278,14 +284,15 @@
       "parameters": {
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
-        }
+          "value": "inbox_buffer",
+          "mode": "list"
+        },
+        "operation": "read"
       },
       "id": "0ae4036e-e239-4f35-9a79-4a6f846aeafb",
       "name": "Read inbox_buffer",
@@ -354,14 +361,15 @@
       "parameters": {
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "18xZp5Spwm8i1RCtk6R9pHvt8cNJJzwK_1FSqHcaivTo",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
-        }
+          "value": "Clientes",
+          "mode": "list"
+        },
+        "operation": "read"
       },
       "id": "ca6e20e6-ec2a-4e90-8c56-7b4116e1b534",
       "name": "Read clientes (admin)",
@@ -382,14 +390,15 @@
       "parameters": {
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1Xgk1mAXzLt-y5T8apWh0Fq8M9lK_EwYEeU80KGMPWJY",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
-        }
+          "value": "Pagos",
+          "mode": "list"
+        },
+        "operation": "read"
       },
       "id": "1a0519c2-f0ab-451f-8b90-85e85dcca181",
       "name": "Read pagos (admin)",
@@ -437,13 +446,105 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "18xZp5Spwm8i1RCtk6R9pHvt8cNJJzwK_1FSqHcaivTo",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "Clientes",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "cliente_id": "={{$json.cliente_id}}",
+            "whatsapp": "={{$json.whatsapp}}",
+            "nombre": "={{$json.nombre}}",
+            "estado": "={{$json.estado}}",
+            "fecha_registro": "={{$json.fecha_registro}}",
+            "ultimo_contacto": "={{$json.ultimo_contacto}}",
+            "saldo": "={{$json.saldo}}",
+            "notas": "={{$json.notas}}"
+          },
+          "matchingColumns": [
+            "cliente_id"
+          ],
+          "schema": [
+            {
+              "id": "cliente_id",
+              "displayName": "cliente_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "whatsapp",
+              "displayName": "whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ultimo_contacto",
+              "displayName": "ultimo_contacto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "saldo",
+              "displayName": "saldo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notas",
+              "displayName": "notas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "30e4afc7-3061-4f62-ae39-0d119b7b2057",
@@ -466,13 +567,95 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1Xgk1mAXzLt-y5T8apWh0Fq8M9lK_EwYEeU80KGMPWJY",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "Pagos",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "pago_id": "={{$json.pago_id}}",
+            "cliente_id": "={{$json.cliente_id}}",
+            "whatsapp": "={{$json.whatsapp}}",
+            "monto": "={{$json.monto}}",
+            "metodo_pago": "={{$json.metodo_pago}}",
+            "fecha_pago": "={{$json.fecha_pago}}",
+            "estado_pago": "={{$json.estado_pago}}"
+          },
+          "matchingColumns": [
+            "pago_id"
+          ],
+          "schema": [
+            {
+              "id": "pago_id",
+              "displayName": "pago_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cliente_id",
+              "displayName": "cliente_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "whatsapp",
+              "displayName": "whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "monto",
+              "displayName": "monto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "metodo_pago",
+              "displayName": "metodo_pago",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_pago",
+              "displayName": "fecha_pago",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado_pago",
+              "displayName": "estado_pago",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "be304f9b-7aad-464b-8b62-6dda8ceaa026",
@@ -516,7 +699,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const resumen = ($json.response || '').slice(0, 120);\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: 'ADMIN',\n  resumen,\n  message_key: '',\n  status_envio: 'OK',\n  error_envio: ''\n} }];"
+        "jsCode": "const resumen = ($json.response || '').slice(0, 120);\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: $json.whatsapp || '',\n    mensaje_usuario: resumen,\n    tipo_mensaje: 'ADMIN',\n    media_url: '',\n    procesado: 'SI'\n  }\n}];"
       },
       "id": "d315cc04-62c8-4221-9bc7-ed605ef568a9",
       "name": "Preparar log admin",
@@ -532,13 +715,83 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1mjE-GZk_bxGMoSiipXEzYyNHMTmnLFQwC4i3_RsTLb4",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "mensajes_log",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{$json.timestamp}}",
+            "whatsapp": "={{$json.whatsapp}}",
+            "mensaje_usuario": "={{$json.mensaje_usuario}}",
+            "tipo_mensaje": "={{$json.tipo_mensaje}}",
+            "media_url": "={{$json.media_url}}",
+            "procesado": "={{$json.procesado}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "whatsapp",
+              "displayName": "whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensaje_usuario",
+              "displayName": "mensaje_usuario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tipo_mensaje",
+              "displayName": "tipo_mensaje",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_url",
+              "displayName": "media_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "procesado",
+              "displayName": "procesado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "2943758e-6a7d-452b-8f40-a0d9878cf6f0",
@@ -561,13 +814,109 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "inbox_buffer",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message_id": "={{$json.message_id}}",
+            "status": "={{$json.status}}",
+            "batch_id": "={{$json.batch_id}}"
+          },
+          "matchingColumns": [
+            "message_id"
+          ],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "whatsapp",
+              "displayName": "whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_type",
+              "displayName": "message_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "text",
+              "displayName": "text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_id",
+              "displayName": "media_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_mime",
+              "displayName": "media_mime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "batch_id",
+              "displayName": "batch_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "13620a3c-73af-4f99-b380-19a50e508d22",
@@ -618,14 +967,15 @@
       "parameters": {
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "18xZp5Spwm8i1RCtk6R9pHvt8cNJJzwK_1FSqHcaivTo",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
-        }
+          "value": "Clientes",
+          "mode": "list"
+        },
+        "operation": "read"
       },
       "id": "b8005a7a-1c74-4409-a5b9-980a0354a8d9",
       "name": "Read clientes",
@@ -702,7 +1052,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: 'NUEVO_CLIENTE',\n  resumen: 'Solicitud de alta enviada',\n  message_key: '',\n  status_envio: 'OK',\n  error_envio: ''\n} }];"
+        "jsCode": "return [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: $json.whatsapp || '',\n    mensaje_usuario: 'Solicitud de alta enviada',\n    tipo_mensaje: 'NUEVO_CLIENTE',\n    media_url: '',\n    procesado: 'SI'\n  }\n}];"
       },
       "id": "0f3ddb12-fc09-4baa-841a-67885bea567a",
       "name": "Preparar log nuevo",
@@ -718,13 +1068,83 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1mjE-GZk_bxGMoSiipXEzYyNHMTmnLFQwC4i3_RsTLb4",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "mensajes_log",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{$json.timestamp}}",
+            "whatsapp": "={{$json.whatsapp}}",
+            "mensaje_usuario": "={{$json.mensaje_usuario}}",
+            "tipo_mensaje": "={{$json.tipo_mensaje}}",
+            "media_url": "={{$json.media_url}}",
+            "procesado": "={{$json.procesado}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "whatsapp",
+              "displayName": "whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensaje_usuario",
+              "displayName": "mensaje_usuario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tipo_mensaje",
+              "displayName": "tipo_mensaje",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_url",
+              "displayName": "media_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "procesado",
+              "displayName": "procesado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "0f4296a3-eb15-4fdf-acfd-c5cc423c4baf",
@@ -747,13 +1167,109 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "inbox_buffer",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message_id": "={{$json.message_id}}",
+            "status": "={{$json.status}}",
+            "batch_id": "={{$json.batch_id}}"
+          },
+          "matchingColumns": [
+            "message_id"
+          ],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "whatsapp",
+              "displayName": "whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_type",
+              "displayName": "message_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "text",
+              "displayName": "text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_id",
+              "displayName": "media_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_mime",
+              "displayName": "media_mime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "batch_id",
+              "displayName": "batch_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "78b6f216-04df-402c-acab-540c5b8302f9",
@@ -804,14 +1320,15 @@
       "parameters": {
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1mjE-GZk_bxGMoSiipXEzYyNHMTmnLFQwC4i3_RsTLb4",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
-        }
+          "value": "mensajes_log",
+          "mode": "list"
+        },
+        "operation": "read"
       },
       "id": "9168d87d-6511-4114-a89a-47c3f399d0db",
       "name": "Read mensajes_log",
@@ -1006,7 +1523,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const v = $json.vision_data || {};\nconst pagoId = `pago_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;\nreturn [{ json: {\n  pago_id: pagoId,\n  cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n  timestamp_creado: new Date().toISOString(),\n  fecha_pago: v.fecha || '',\n  monto: v.monto || '',\n  moneda: v.moneda || '',\n  entidad: v.entidad || '',\n  referencia: v.referencia || '',\n  estado: 'PENDIENTE_CONFIRMACION',\n  confidence: v.confidence_0_100 || '',\n  validado_por: 'IA',\n  nota: v.notas || ''\n} }];"
+        "jsCode": "const v = $json.vision_data || {};\nconst pagoId = `pago_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;\nreturn [{\n  json: {\n    pago_id: pagoId,\n    cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n    whatsapp: $json.whatsapp || ($json.cliente && $json.cliente.whatsapp ? $json.cliente.whatsapp : ''),\n    monto: v.monto || '',\n    metodo_pago: v.entidad || '',\n    fecha_pago: v.fecha || '',\n    estado_pago: 'PENDIENTE_CONFIRMACION'\n  }\n}];"
       },
       "id": "d3da40af-dbce-49e3-8a3c-d43e4a808b65",
       "name": "Preparar pago",
@@ -1022,13 +1539,93 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1Xgk1mAXzLt-y5T8apWh0Fq8M9lK_EwYEeU80KGMPWJY",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "Pagos",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "pago_id": "={{$json.pago_id}}",
+            "cliente_id": "={{$json.cliente_id}}",
+            "whatsapp": "={{$json.whatsapp}}",
+            "monto": "={{$json.monto}}",
+            "metodo_pago": "={{$json.metodo_pago}}",
+            "fecha_pago": "={{$json.fecha_pago}}",
+            "estado_pago": "={{$json.estado_pago}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "pago_id",
+              "displayName": "pago_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cliente_id",
+              "displayName": "cliente_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "whatsapp",
+              "displayName": "whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "monto",
+              "displayName": "monto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "metodo_pago",
+              "displayName": "metodo_pago",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_pago",
+              "displayName": "fecha_pago",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado_pago",
+              "displayName": "estado_pago",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "418cc2f2-857e-4df9-ab8e-f7dc45b1251d",
@@ -1160,13 +1757,105 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "18xZp5Spwm8i1RCtk6R9pHvt8cNJJzwK_1FSqHcaivTo",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "Clientes",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "cliente_id": "={{$json.cliente_id}}",
+            "whatsapp": "={{$json.whatsapp}}",
+            "nombre": "={{$json.nombre}}",
+            "estado": "={{$json.estado}}",
+            "fecha_registro": "={{$json.fecha_registro}}",
+            "ultimo_contacto": "={{$json.ultimo_contacto}}",
+            "saldo": "={{$json.saldo}}",
+            "notas": "={{$json.notas}}"
+          },
+          "matchingColumns": [
+            "cliente_id"
+          ],
+          "schema": [
+            {
+              "id": "cliente_id",
+              "displayName": "cliente_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "whatsapp",
+              "displayName": "whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ultimo_contacto",
+              "displayName": "ultimo_contacto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "saldo",
+              "displayName": "saldo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notas",
+              "displayName": "notas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "0bcdae80-29dd-4c49-a203-06b6b3ebc97b",
@@ -1189,13 +1878,109 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "inbox_buffer",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message_id": "={{$json.message_id}}",
+            "status": "={{$json.status}}",
+            "batch_id": "={{$json.batch_id}}"
+          },
+          "matchingColumns": [
+            "message_id"
+          ],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "whatsapp",
+              "displayName": "whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_type",
+              "displayName": "message_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "text",
+              "displayName": "text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_id",
+              "displayName": "media_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_mime",
+              "displayName": "media_mime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "batch_id",
+              "displayName": "batch_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "e194977a-3685-4929-b943-1392f5767ef0",
@@ -1265,14 +2050,15 @@
       "parameters": {
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "18xZp5Spwm8i1RCtk6R9pHvt8cNJJzwK_1FSqHcaivTo",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
-        }
+          "value": "Clientes",
+          "mode": "list"
+        },
+        "operation": "read"
       },
       "id": "d8d1fcfc-c138-4d2d-9f4c-7670c6e75df8",
       "name": "Read clientes (recordatorios)",
@@ -1293,14 +2079,15 @@
       "parameters": {
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1JQ3e5K4qBX4GMZBCmtDo_SPmWCvmDzSdXLAfC5HR28Y",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
-        }
+          "value": "Recordatorios",
+          "mode": "list"
+        },
+        "operation": "read"
       },
       "id": "f1b8408a-233f-4233-bcdd-00014dde63cd",
       "name": "Read logs (recordatorios)",
@@ -1319,7 +2106,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const clientes = $items('Read clientes (recordatorios)').map(i => i.json);\nconst logs = $items('Read logs (recordatorios)').map(i => i.json);\nconst now = new Date();\n\nconst types = [\n  { name: 'RECORDATORIO_7D', diff: 7 },\n  { name: 'RECORDATORIO_2D', diff: 2 },\n  { name: 'VENCE_HOY', diff: 0 },\n  { name: 'SEGUIMIENTO_3D', diff: -3 },\n  { name: 'SEGUIMIENTO_7D', diff: -7 },\n  { name: 'MOROSO_14D', diff: -14 }\n];\n\nconst out = [];\nfor (const c of clientes) {\n  if (c.estado !== 'ACTIVO' || c.consentimiento_mensajes !== 'SI') continue;\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  if (!venc) continue;\n  const diffDays = Math.floor((venc - now) / (1000 * 60 * 60 * 24));\n  const match = types.find(t => diffDays === t.diff);\n  if (!match) continue;\n\n  const messageKey = `${c.cliente_id}_${match.name}_${c.proximo_vencimiento}`;\n  const already = logs.find(l => l.message_key === messageKey);\n  if (already) continue;\n\n  out.push({\n    json: {\n      cliente: c,\n      tipo_mensaje: match.name,\n      message_key: messageKey,\n      texto: `Hola ${c.nombre}, recordatorio: tu pago vence el ${c.proximo_vencimiento}. Si ya pagaste, ignora este mensaje.`\n    }\n  });\n}\n\nreturn out;"
+        "jsCode": "const clientes = $items('Read clientes (recordatorios)').map(i => i.json);\nconst logs = $items('Read logs (recordatorios)').map(i => i.json);\nconst now = new Date();\n\nconst types = [\n  { name: 'RECORDATORIO_7D', diff: 7 },\n  { name: 'RECORDATORIO_2D', diff: 2 },\n  { name: 'VENCE_HOY', diff: 0 },\n  { name: 'SEGUIMIENTO_3D', diff: -3 },\n  { name: 'SEGUIMIENTO_7D', diff: -7 },\n  { name: 'MOROSO_14D', diff: -14 }\n];\n\nconst out = [];\nfor (const c of clientes) {\n  if (c.estado !== 'ACTIVO' || c.consentimiento_mensajes !== 'SI') continue;\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  if (!venc) continue;\n  const diffDays = Math.floor((venc - now) / (1000 * 60 * 60 * 24));\n  const match = types.find(t => diffDays === t.diff);\n  if (!match) continue;\n\n  const recordatorioId = `${c.cliente_id}_${match.name}_${c.proximo_vencimiento}`;\n  const already = logs.find(l => l.recordatorio_id === recordatorioId);\n  if (already) continue;\n\n  out.push({\n    json: {\n      cliente: c,\n      tipo_mensaje: match.name,\n      recordatorio_id: recordatorioId,\n      texto: `Hola ${c.nombre}, recordatorio: tu pago vence el ${c.proximo_vencimiento}. Si ya pagaste, ignora este mensaje.`\n    }\n  });\n}\n\nreturn out;"
       },
       "id": "7ccbe10f-7e35-47de-8aab-4a3fcb27466a",
       "name": "Construir recordatorios",
@@ -1356,7 +2143,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: { timestamp: new Date().toISOString(), cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '', whatsapp: $json.cliente && $json.cliente.whatsapp ? $json.cliente.whatsapp : '', tipo_mensaje: $json.tipo_mensaje || '', resumen: ($json.texto || '').slice(0, 120), message_key: $json.message_key || '', status_envio: 'OK', error_envio: '' } }];"
+        "jsCode": "return [{\n  json: {\n    recordatorio_id: $json.recordatorio_id || '',\n    cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n    whatsapp: $json.cliente && $json.cliente.whatsapp ? $json.cliente.whatsapp : '',\n    mensaje: $json.texto || '',\n    fecha_envio: new Date().toISOString(),\n    enviado: 'SI'\n  }\n}];"
       },
       "id": "7913c4c8-5fb4-4937-978b-86c3a302fb7b",
       "name": "Preparar log recordatorio",
@@ -1372,13 +2159,83 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1JQ3e5K4qBX4GMZBCmtDo_SPmWCvmDzSdXLAfC5HR28Y",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "Recordatorios",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "recordatorio_id": "={{$json.recordatorio_id}}",
+            "cliente_id": "={{$json.cliente_id}}",
+            "whatsapp": "={{$json.whatsapp}}",
+            "mensaje": "={{$json.mensaje}}",
+            "fecha_envio": "={{$json.fecha_envio}}",
+            "enviado": "={{$json.enviado}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "recordatorio_id",
+              "displayName": "recordatorio_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cliente_id",
+              "displayName": "cliente_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "whatsapp",
+              "displayName": "whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensaje",
+              "displayName": "mensaje",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_envio",
+              "displayName": "fecha_envio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "enviado",
+              "displayName": "enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "a128f5b6-c196-4c13-811a-08dfede64543",
@@ -1424,14 +2281,15 @@
       "parameters": {
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "18xZp5Spwm8i1RCtk6R9pHvt8cNJJzwK_1FSqHcaivTo",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
-        }
+          "value": "Clientes",
+          "mode": "list"
+        },
+        "operation": "read"
       },
       "id": "291740d9-3f69-490e-89bd-4880567004b3",
       "name": "Read clientes (reportes)",
@@ -1450,7 +2308,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const clientes = items.map(i => i.json).filter(c => c.estado === 'ACTIVO');\nconst now = new Date();\nlet porVencer = 0;\nlet venceHoy = 0;\nlet vencidos1a7 = 0;\nlet morosos = 0;\nlet montoEsperado = 0;\n\nfor (const c of clientes) {\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  if (!venc) continue;\n  const diff = Math.floor((venc - now) / (1000 * 60 * 60 * 24));\n  if (diff >= 0 && diff <= 2) porVencer += 1;\n  if (diff === 0) venceHoy += 1;\n  if (diff < 0 && diff >= -7) vencidos1a7 += 1;\n  if (diff <= -8) morosos += 1;\n  montoEsperado += Number(c.monto_mensual || 0);\n}\n\nconst texto = `Reporte: Activos ${clientes.length}. Por vencer (0-2): ${porVencer}. Vence hoy: ${venceHoy}. Vencidos 1-7: ${vencidos1a7}. Morosos 8+: ${morosos}. Monto esperado: ${montoEsperado}.`;\nreturn [{ json: { texto } }];"
+        "jsCode": "const clientes = items.map(i => i.json).filter(c => c.estado === 'ACTIVO');\nconst now = new Date();\nlet porVencer = 0;\nlet venceHoy = 0;\nlet vencidos1a7 = 0;\nlet morosos = 0;\nlet montoEsperado = 0;\n\nfor (const c of clientes) {\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  if (!venc) continue;\n  const diff = Math.floor((venc - now) / (1000 * 60 * 60 * 24));\n  if (diff >= 0 && diff <= 2) porVencer += 1;\n  if (diff === 0) venceHoy += 1;\n  if (diff < 0 && diff >= -7) vencidos1a7 += 1;\n  if (diff <= -8) morosos += 1;\n  montoEsperado += Number(c.monto_mensual || 0);\n}\n\nconst texto = `Reporte: Activos ${clientes.length}. Por vencer (0-2): ${porVencer}. Vence hoy: ${venceHoy}. Vencidos 1-7: ${vencidos1a7}. Morosos 8+: ${morosos}. Monto esperado: ${montoEsperado}.`;\nreturn [{\n  json: {\n    texto,\n    fecha: now.toISOString().slice(0, 10),\n    total_clientes: clientes.length,\n    total_pagos: 0,\n    monto_total: montoEsperado,\n    mensajes_recibidos: 0,\n    observaciones: texto\n  }\n}];"
       },
       "id": "c7e2258e-a8ec-4713-a401-67b24ea70b08",
       "name": "Construir reporte",
@@ -1487,7 +2345,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: { timestamp: new Date().toISOString(), cliente_id: '', whatsapp: $env.OWNER_WHATSAPP || '', tipo_mensaje: 'REPORTE', resumen: ($json.texto || '').slice(0, 120), message_key: '', status_envio: 'OK', error_envio: '' } }];"
+        "jsCode": "return [{\n  json: {\n    fecha: $json.fecha || new Date().toISOString().slice(0, 10),\n    total_clientes: $json.total_clientes || 0,\n    total_pagos: $json.total_pagos || 0,\n    monto_total: $json.monto_total || 0,\n    mensajes_recibidos: $json.mensajes_recibidos || 0,\n    observaciones: $json.observaciones || $json.texto || ''\n  }\n}];"
       },
       "id": "c0c265f3-d228-4788-97fe-4045d823037d",
       "name": "Preparar log reporte",
@@ -1503,13 +2361,83 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1r11WVOlgSTAymxjimDhEUWIONc22cCAanKhn-eqz8QA",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "Reportes",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha": "={{$json.fecha}}",
+            "total_clientes": "={{$json.total_clientes}}",
+            "total_pagos": "={{$json.total_pagos}}",
+            "monto_total": "={{$json.monto_total}}",
+            "mensajes_recibidos": "={{$json.mensajes_recibidos}}",
+            "observaciones": "={{$json.observaciones}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total_clientes",
+              "displayName": "total_clientes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total_pagos",
+              "displayName": "total_pagos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "monto_total",
+              "displayName": "monto_total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensajes_recibidos",
+              "displayName": "mensajes_recibidos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "observaciones",
+              "displayName": "observaciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "dde86df4-dc60-4db0-bdf2-57cc709e7c23",
@@ -1582,7 +2510,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const resumen = ($json.ai_reply || '').slice(0, 120);\nconst status = $json.openai_failed ? 'ERROR' : 'OK';\nconst errorEnvio = $json.openai_failed ? ($json.openai_error || 'OpenAI error') : '';\nreturn [{ json: {\n  timestamp: new Date().toISOString(),\n  cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n  whatsapp: $json.whatsapp || '',\n  tipo_mensaje: 'RESPUESTA_IA',\n  resumen,\n  message_key: '',\n  status_envio: status,\n  error_envio: errorEnvio\n} }];"
+        "jsCode": "return [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: $json.whatsapp || '',\n    mensaje_usuario: $json.user_input || $json.combined_text || '',\n    respuesta_ia: $json.ai_reply || '',\n    contexto: $json.context_json || ''\n  }\n}];"
       },
       "id": "6c50aef2-c765-4786-928c-c4f397e2372c",
       "name": "Preparar log respuesta IA",
@@ -1598,13 +2526,73 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "1mjE-GZk_bxGMoSiipXEzYyNHMTmnLFQwC4i3_RsTLb4",
+          "mode": "list"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": ""
+          "value": "respuestas_ia",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{$json.timestamp}}",
+            "whatsapp": "={{$json.whatsapp}}",
+            "mensaje_usuario": "={{$json.mensaje_usuario}}",
+            "respuesta_ia": "={{$json.respuesta_ia}}",
+            "contexto": "={{$json.contexto}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "whatsapp",
+              "displayName": "whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensaje_usuario",
+              "displayName": "mensaje_usuario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "respuesta_ia",
+              "displayName": "respuesta_ia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "contexto",
+              "displayName": "contexto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         }
       },
       "id": "1a6a7e32-476c-4e81-8432-171c9f312762",
