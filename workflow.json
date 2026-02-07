@@ -9,7 +9,7 @@
   "nodes": [
     {
       "parameters": {
-        "path": "webhook/whatsapp-in",
+        "path": "whatsapp-in",
         "responseMode": "responseNode",
         "options": {},
         "httpMethod": "POST"
@@ -26,7 +26,7 @@
     },
     {
       "parameters": {
-        "path": "webhook/whatsapp-in-verify",
+        "path": "whatsapp-in-verify",
         "responseMode": "responseNode",
         "options": {},
         "httpMethod": "GET"
