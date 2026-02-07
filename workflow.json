@@ -11,7 +11,8 @@
       "parameters": {
         "path": "webhook/whatsapp-in",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {},
+        "httpMethod": "POST"
       },
       "id": "6da78eeb-4bd7-46b7-8e36-7fd9d9770bc6",
       "name": "Webhook In",
@@ -22,6 +23,110 @@
         0
       ],
       "webhookId": "f80acfa6-40ba-405e-92c0-2eae4f97dc35"
+    },
+    {
+      "parameters": {
+        "path": "webhook/whatsapp-in-verify",
+        "responseMode": "responseNode",
+        "options": {},
+        "httpMethod": "GET"
+      },
+      "id": "9c8e4f86-6c4c-4f5a-9b9a-1a0bbf3f6a9f",
+      "name": "Webhook In (verify)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -160
+      ],
+      "webhookId": "c2c6d0c1-0d5e-45b4-8c5b-7e4d9b5e2f6a"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $query ?? $json.query ?? {};\nconst mode = query['hub.mode'];\nconst token = query['hub.verify_token'];\nconst challenge = query['hub.challenge'];\nconst isVerifyRequest = !!(mode && token && challenge);\nconst isVerifyValid = isVerifyRequest && mode === 'subscribe' && token === $env.WHATSAPP_VERIFY_TOKEN;\n\nreturn [{\n  json: {\n    ...$json,\n    verify: {\n      is_request: isVerifyRequest,\n      is_valid: isVerifyValid,\n      challenge: challenge || ''\n    }\n  }\n}];"
+      },
+      "id": "d0a5f4c8-5c4b-4c73-81bb-5ad1235cf5d3",
+      "name": "Verificar webhook (GET)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.verify.is_request}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bdc0cc6c-2e2b-47c3-8228-4173fa918469",
+      "name": "IF Es verificación",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.verify.is_valid}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "78ce77d1-c7be-4fc2-8b1f-a3d15aa24c5b",
+      "name": "IF Token válido (verify)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        512,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "responseCode": 200,
+        "responseData": "noData",
+        "responseContentType": "text/plain",
+        "responseBody": "={{$json.verify.challenge}}"
+      },
+      "id": "89e5ec07-0c46-4e03-8526-56e6fe0c66da",
+      "name": "Respond verify OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        736,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "responseCode": 403,
+        "responseData": "noData",
+        "responseContentType": "text/plain",
+        "responseBody": "Invalid verify token"
+      },
+      "id": "f3ffcc2f-4e4c-45d3-9ba3-61d74c78a2d7",
+      "name": "Respond verify invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        736,
+        -32
+      ]
     },
     {
       "parameters": {
@@ -3343,6 +3448,57 @@
         [
           {
             "node": "Log respuesta IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar webhook (GET)": {
+      "main": [
+        [
+          {
+            "node": "IF Es verificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Es verificación": {
+      "main": [
+        [
+          {
+            "node": "IF Token válido (verify)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Token válido (verify)": {
+      "main": [
+        [
+          {
+            "node": "Respond verify OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond verify invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook In (verify)": {
+      "main": [
+        [
+          {
+            "node": "Verificar webhook (GET)",
             "type": "main",
             "index": 0
           }
