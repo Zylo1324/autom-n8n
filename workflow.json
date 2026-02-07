@@ -43,7 +43,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const query = $json.query ?? $query ?? {};\nconst mode = query['hub.mode'];\nconst token = query['hub.verify_token'];\nconst challenge = query['hub.challenge'];\nconst isVerifyRequest = !!(mode && token && challenge);\nconst isVerifyValid = isVerifyRequest && mode === 'subscribe' && token === $env.WHATSAPP_VERIFY_TOKEN;\n\nreturn [{\n  json: {\n    ...$json,\n    verify: {\n      is_request: isVerifyRequest,\n      is_valid: isVerifyValid,\n      challenge: challenge || ''\n    }\n  }\n}];"
+        "jsCode": "const query = $json.query ?? $query ?? {};\nconst mode = query['hub.mode'];\nconst token = query['hub.verify_token'];\nconst challenge = query['hub.challenge'];\n\nconst isVerifyRequest = !!(mode && token && challenge);\nconst isVerifyValid =\n  isVerifyRequest &&\n  mode === 'subscribe' &&\n  token === $env.WHATSAPP_VERIFY_TOKEN;\n\nreturn [\n  {\n    json: {\n      ...$json,\n      verify: {\n        is_request: isVerifyRequest,\n        is_valid: isVerifyValid,\n        challenge: String(challenge ?? ''),\n      },\n    },\n  },\n];"
       },
       "id": "d0a5f4c8-5c4b-4c73-81bb-5ad1235cf5d3",
       "name": "Verificar webhook (GET)",
