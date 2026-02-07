@@ -4,7 +4,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "whatsapp-in",
+        "path": "webhook/whatsapp-in",
         "options": {}
       },
       "id": "98f846a4-b2f3-4cad-8bd7-2e62a90c8187",
@@ -235,7 +235,12 @@
     },
     {
       "parameters": {
-        "options": {}
+        "options": {
+          "responseContentType": "text/plain"
+        },
+        "responseCode": 200,
+        "responseData": "noData",
+        "responseBody": "OK"
       },
       "id": "8f6294f1-1c85-4420-9017-ea8c348b5922",
       "name": "Respond OK",
@@ -248,7 +253,12 @@
     },
     {
       "parameters": {
-        "options": {}
+        "options": {
+          "responseContentType": "text/plain"
+        },
+        "responseCode": 200,
+        "responseData": "noData",
+        "responseBody": "OK"
       },
       "id": "d7361a8b-4584-47dc-b846-7a2809d3302d",
       "name": "Respond OK (invalid)",
@@ -265,8 +275,8 @@
           "item": [
             {
               "mode": "everyX",
-              "value": 15,
-              "unit": "seconds"
+              "value": 1,
+              "unit": "minutes"
             }
           ]
         }
@@ -2629,6 +2639,53 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "webhook/whatsapp-in",
+        "options": {}
+      },
+      "id": "8a9b3d3b-5dc0-4f72-b91b-c7e9cd374b77",
+      "name": "Webhook In (validation)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -160
+      ],
+      "webhookId": "813b8d66-103b-48b1-b9b7-a21b503ccfc1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $json.query || {};\nconst mode = query['hub.mode'];\nconst token = query['hub.verify_token'];\nconst challenge = query['hub.challenge'];\nconst isValid = token === 'mi_token_whatsapp_2026';\n\nreturn [{ json: {\n  mode: mode || '',\n  statusCode: isValid ? 200 : 403,\n  body: isValid ? String(challenge ?? '') : ''\n}}];"
+      },
+      "id": "908b3013-e38f-45fb-ab00-6da24f8614cb",
+      "name": "Validar webhook Meta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -24,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "responseCode": "={{$json.statusCode}}",
+        "responseData": "noData",
+        "responseBody": "={{$json.body}}",
+        "options": {
+          "responseContentType": "text/plain"
+        }
+      },
+      "id": "b7907115-699d-4f8b-8572-200fdaac5e5b",
+      "name": "Respond Meta Validation",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        224,
+        -160
+      ]
     }
   ],
   "pinData": {},
@@ -3327,6 +3384,28 @@
         [
           {
             "node": "Log respuesta IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook In (validation)": {
+      "main": [
+        [
+          {
+            "node": "Validar webhook Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar webhook Meta": {
+      "main": [
+        [
+          {
+            "node": "Respond Meta Validation",
             "type": "main",
             "index": 0
           }
