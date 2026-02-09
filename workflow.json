@@ -1,26 +1,20 @@
 {
-  "updatedAt": "2026-02-07T16:57:56.940Z",
-  "createdAt": "2026-02-06T21:16:26.712Z",
-  "id": "__2cWlvvhExh0VkwuWIg_",
   "name": "Cobros WhatsApp + Sheets + OpenAI (Pro)",
-  "description": null,
-  "active": true,
-  "isArchived": false,
   "nodes": [
     {
       "parameters": {
+        "httpMethod": "POST",
         "path": "whatsapp-in",
         "responseMode": "responseNode",
-        "options": {},
-        "httpMethod": "POST"
+        "options": {}
       },
-      "id": "6da78eeb-4bd7-46b7-8e36-7fd9d9770bc6",
+      "id": "5284d3f9-cb48-4694-998a-81987d27386a",
       "name": "Webhook In",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        0,
-        0
+        -752,
+        224
       ],
       "webhookId": "f80acfa6-40ba-405e-92c0-2eae4f97dc35"
     },
@@ -28,16 +22,15 @@
       "parameters": {
         "path": "whatsapp-in-verify",
         "responseMode": "responseNode",
-        "options": {},
-        "httpMethod": "GET"
+        "options": {}
       },
-      "id": "9c8e4f86-6c4c-4f5a-9b9a-1a0bbf3f6a9f",
+      "id": "084b3b1c-32d3-47d6-b83f-0c48ed7f0dc1",
       "name": "Webhook In (verify)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        0,
-        -160
+        -752,
+        48
       ],
       "webhookId": "c2c6d0c1-0d5e-45b4-8c5b-7e4d9b5e2f6a"
     },
@@ -45,13 +38,13 @@
       "parameters": {
         "jsCode": "const query = $json.query ?? $query ?? {};\nconst mode = query['hub.mode'];\nconst token = query['hub.verify_token'];\nconst challenge = query['hub.challenge'];\n\nconst isVerifyRequest = !!(mode && token && challenge);\nconst isVerifyValid =\n  isVerifyRequest &&\n  mode === 'subscribe' &&\n  token === $env.WHATSAPP_VERIFY_TOKEN;\n\nreturn [\n  {\n    json: {\n      ...$json,\n      verify: {\n        is_request: isVerifyRequest,\n        is_valid: isVerifyValid,\n        challenge: String(challenge ?? ''),\n      },\n    },\n  },\n];"
       },
-      "id": "d0a5f4c8-5c4b-4c73-81bb-5ad1235cf5d3",
+      "id": "a6313cfd-f05f-4eb7-bbdd-39e5e9c8644b",
       "name": "Verificar webhook (GET)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        112,
-        0
+        -528,
+        224
       ]
     },
     {
@@ -66,13 +59,13 @@
         },
         "options": {}
       },
-      "id": "bdc0cc6c-2e2b-47c3-8228-4173fa918469",
+      "id": "dc21aaba-00c4-46d6-bc2b-8143565a4b66",
       "name": "IF Es verificación",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        320,
-        0
+        -192,
+        224
       ]
     },
     {
@@ -87,58 +80,76 @@
         },
         "options": {}
       },
-      "id": "78ce77d1-c7be-4fc2-8b1f-a3d15aa24c5b",
+      "id": "b1dc03db-7b19-48f5-8335-ec06c968d974",
       "name": "IF Token válido (verify)",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        512,
-        -112
+        -16,
+        32
       ]
     },
     {
       "parameters": {
-        "responseCode": 200,
-        "responseData": "noData",
-        "responseContentType": "text/plain",
-        "responseBody": "={{$json.verify.challenge}}"
+        "respondWith": "text",
+        "responseBody": "={{$json.verify.challenge}}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain"
+              }
+            ]
+          }
+        }
       },
-      "id": "89e5ec07-0c46-4e03-8526-56e6fe0c66da",
+      "id": "e0c42b2f-ad52-46e5-9382-e732d89ae1b7",
       "name": "Respond verify OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        736,
-        -192
+        256,
+        -80
       ]
     },
     {
       "parameters": {
-        "responseCode": 403,
-        "responseData": "noData",
-        "responseContentType": "text/plain",
-        "responseBody": "Invalid verify token"
+        "respondWith": "text",
+        "responseBody": "Invalid verify token",
+        "options": {
+          "responseCode": 403,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain"
+              }
+            ]
+          }
+        }
       },
-      "id": "f3ffcc2f-4e4c-45d3-9ba3-61d74c78a2d7",
+      "id": "1b6eb140-66f2-4fc1-9d6e-ae98b53ddfbd",
       "name": "Respond verify invalid",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        736,
-        -32
+        304,
+        112
       ]
     },
     {
       "parameters": {
         "jsCode": "const data = $json;\nconst headers = $headers ?? data.headers ?? {};\nconst query = data.query ?? {};\nconst payload = data.body ?? data;\nconst secret = headers['x-origin-secret'] || headers['X-Origin-Secret'] || query.secret;\nconst validSecret = secret === $env.ORIGIN_SECRET;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0] ?? {};\n\nconst from = message.from ?? '';\nconst messageId = message.id ?? '';\nconst timestamp = message.timestamp ? new Date(parseInt(message.timestamp, 10) * 1000).toISOString() : new Date().toISOString();\nconst type = message.type || 'text';\n\nlet text = '';\nlet mediaId = '';\nlet mediaMime = '';\n\nif (type === 'text') {\n  text = message.text?.body || '';\n} else if (type === 'image') {\n  mediaId = message.image?.id || '';\n  mediaMime = message.image?.mime_type || '';\n  text = message.image?.caption || '';\n} else if (type === 'document') {\n  mediaId = message.document?.id || '';\n  mediaMime = message.document?.mime_type || '';\n  text = message.document?.caption || '';\n}\n\nconst normalizePhone = (raw) => {\n  const digits = (raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    valid_secret: !!validSecret,\n    timestamp,\n    whatsapp: normalizePhone(from),\n    message_id: messageId,\n    message_type: mediaId ? 'media' : 'text',\n    text: text || '',\n    media_id: mediaId || '',\n    media_mime: mediaMime || ''\n  }\n}];"
       },
-      "id": "af64a225-9507-4fd6-9263-36b421afa835",
+      "id": "ee396196-141b-4a00-adae-962b8e8b578d",
       "name": "Normalizar y validar",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        224,
-        0
+        -352,
+        224
       ]
     },
     {
@@ -153,13 +164,13 @@
         },
         "options": {}
       },
-      "id": "fb8437e8-1d14-42e7-bc2d-bf598f37099b",
+      "id": "11fcf97d-44cd-4145-888e-31da7f88fc22",
       "name": "IF Secret válido",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        448,
-        0
+        -32,
+        224
       ]
     },
     {
@@ -205,13 +216,13 @@
         },
         "options": {}
       },
-      "id": "0f902711-e057-4a70-9e99-150ce3400f16",
+      "id": "b6ee7afe-29ec-4d04-8c29-c1f94426368a",
       "name": "Preparar buffer",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        672,
-        0
+        160,
+        224
       ]
     },
     {
@@ -329,13 +340,13 @@
         },
         "options": {}
       },
-      "id": "1c1ad042-269d-4c84-83f8-34556ddf5df8",
+      "id": "e9920ce5-557c-40da-b114-31093ae4a2ff",
       "name": "Append inbox_buffer",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        880,
-        0
+        432,
+        224
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -348,26 +359,26 @@
       "parameters": {
         "options": {}
       },
-      "id": "e297ab93-2794-4cef-85d8-085060d48b6d",
+      "id": "c2542b78-8fdd-4447-bae1-8f114c30ec1d",
       "name": "Respond OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1104,
-        0
+        656,
+        224
       ]
     },
     {
       "parameters": {
         "options": {}
       },
-      "id": "33c4b6b0-0cf0-4301-ac10-c43e81789028",
+      "id": "52845d65-4afc-4f39-9343-8700d7cc1a29",
       "name": "Respond OK (invalid)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        880,
-        192
+        144,
+        384
       ]
     },
     {
@@ -382,13 +393,13 @@
           ]
         }
       },
-      "id": "71bc2b87-740e-4f04-bb80-494440f8130d",
+      "id": "93f9f71d-8f6a-4f47-9ab7-eaf28f631a4f",
       "name": "Cron Procesador",
       "type": "n8n-nodes-base.cron",
       "typeVersion": 1,
       "position": [
-        0,
-        400
+        -736,
+        720
       ]
     },
     {
@@ -405,13 +416,13 @@
         },
         "options": {}
       },
-      "id": "0be60467-88f8-429c-ab36-fc19ff8a822f",
+      "id": "574f9e6b-afd5-46e7-9ca7-0f7b5ff8602d",
       "name": "Read inbox_buffer",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        224,
-        400
+        -512,
+        720
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -424,13 +435,13 @@
       "parameters": {
         "jsCode": "const WINDOW_SEC = Number($env.WINDOW_SEC || 12);\nconst now = Date.now();\nconst rows = items.map(i => i.json);\nconst pending = rows.filter(r => r.status === 'PENDING');\n\nconst byWhatsapp = {};\nfor (const row of pending) {\n  const wa = row.whatsapp || '';\n  if (!wa) continue;\n  if (!byWhatsapp[wa]) byWhatsapp[wa] = [];\n  byWhatsapp[wa].push(row);\n}\n\nconst output = [];\nfor (const [wa, msgs] of Object.entries(byWhatsapp)) {\n  const sorted = msgs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());\n  const last = sorted[sorted.length - 1];\n  const ageSec = (now - new Date(last.timestamp).getTime()) / 1000;\n  if (ageSec < WINDOW_SEC) continue;\n\n  const combinedText = sorted.map(m => m.text).filter(Boolean).join('\n');\n  const hasImage = sorted.some(m => (m.media_mime || '').startsWith('image/'));\n  const mediaIds = sorted.filter(m => (m.media_mime || '').startsWith('image/')).map(m => m.media_id).filter(Boolean);\n  const pendingTimestamps = sorted.map(m => m.timestamp);\n  const pendingMessageIds = sorted.map(m => m.message_id).filter(Boolean);\n\n  output.push({\n    json: {\n      whatsapp: wa,\n      combined_text: combinedText,\n      has_image: hasImage,\n      media_ids: mediaIds,\n      pending_timestamps: pendingTimestamps,\n      pending_message_ids: pendingMessageIds,\n      last_message_at: last.timestamp,\n      batch_id: `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`\n    }\n  });\n}\n\nreturn output;"
       },
-      "id": "7447fe38-d07c-4232-91e7-8a58901edacc",
+      "id": "4b6408b1-f345-470c-9a6b-4ba35535e18c",
       "name": "Agrupar y debounce",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        400
+        -288,
+        720
       ]
     },
     {
@@ -446,26 +457,26 @@
         },
         "options": {}
       },
-      "id": "c8225fdc-e6ec-4085-9302-4319887eb8e7",
+      "id": "5b03e136-7c4a-4d07-8860-38447c8bbf7c",
       "name": "IF Owner",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        672,
-        400
+        -48,
+        720
       ]
     },
     {
       "parameters": {
         "jsCode": "const text = ($json.combined_text || '').trim();\nconst upper = text.toUpperCase();\nlet action = 'UNKNOWN';\nlet args = [];\n\nconst parts = text.split(/[ ]+/);\n\nif (upper.startsWith('BUSCAR CLIENTE')) {\n  action = 'BUSCAR_CLIENTE';\n  args = [text.replace(/BUSCAR CLIENTE[ ]*/i, '')];\n} else if (upper.startsWith('CONFIRMAR PAGO')) {\n  action = 'CONFIRMAR_PAGO';\n  args = [text.replace(/CONFIRMAR PAGO[ ]*/i, '')];\n} else if (upper.startsWith('RECHAZAR PAGO')) {\n  action = 'RECHAZAR_PAGO';\n  args = [text.replace(/RECHAZAR PAGO[ ]*/i, '')];\n} else if (upper.startsWith('ACTUALIZAR LINK')) {\n  action = 'ACTUALIZAR_LINK';\n  args = parts.slice(2);\n} else if (upper.startsWith('SUSPENDER')) {\n  action = 'SUSPENDER';\n  args = [parts[1]];\n} else if (upper.startsWith('ACTIVAR')) {\n  action = 'ACTIVAR';\n  args = [parts[1]];\n} else if (upper.startsWith('SET VENCIMIENTO')) {\n  action = 'SET_VENCIMIENTO';\n  args = parts.slice(2);\n} else if (upper.startsWith('SET MONTO')) {\n  action = 'SET_MONTO';\n  args = parts.slice(2);\n}\n\nreturn [{ json: { ...$json, action, args } }];"
       },
-      "id": "d3b30faa-60d7-48d1-baf8-3f5d5d17d8b5",
+      "id": "af50bec9-8143-4e6a-92af-70fd18a46c43",
       "name": "Parse comando admin",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        880,
-        288
+        144,
+        608
       ]
     },
     {
@@ -482,13 +493,13 @@
         },
         "options": {}
       },
-      "id": "4073dfb8-a207-48cc-bdd5-bb8545e141f4",
+      "id": "a22cfb70-6508-4541-98e9-e736b1102c9d",
       "name": "Read clientes (admin)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1104,
-        288
+        368,
+        480
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -511,13 +522,13 @@
         },
         "options": {}
       },
-      "id": "c71cee0f-8061-4f7f-9804-79c40ee72ceb",
+      "id": "7de870d1-a160-4ae2-9c4f-4705a614f814",
       "name": "Read pagos (admin)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1328,
-        288
+        592,
+        480
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -530,26 +541,26 @@
       "parameters": {
         "jsCode": "const clientes = $items('Read clientes (admin)').map(i => i.json);\nconst pagos = $items('Read pagos (admin)').map(i => i.json);\nconst { action, args } = $json;\nlet response = 'Comando no reconocido.';\nlet update = null;\n\nconst findClienteById = (id) => clientes.find(c => c.cliente_id === id);\nconst findPagoById = (id) => pagos.find(p => p.pago_id === id);\n\nif (action === 'BUSCAR_CLIENTE') {\n  const q = (args[0] || '').toLowerCase();\n  const matches = clientes.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.whatsapp || '').includes(q));\n  response = matches.length ? matches.map(c => `${c.cliente_id} | ${c.nombre} | ${c.whatsapp} | ${c.estado}`).join('\n') : 'Sin resultados.';\n}\n\nif (action === 'CONFIRMAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado_pago: 'CONFIRMADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} confirmado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'RECHAZAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado_pago: 'RECHAZADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} rechazado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'ACTUALIZAR_LINK') {\n  const [clienteId, url] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && url) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { link_pago: url } };\n    response = `Link actualizado para ${clienteId}.`;\n  } else {\n    response = 'Cliente o URL inválido.';\n  }\n}\n\nif (action === 'SUSPENDER') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'SUSPENDIDO' } };\n    response = `Cliente ${clienteId} suspendido.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'ACTIVAR') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'ACTIVO' } };\n    response = `Cliente ${clienteId} activado.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'SET_VENCIMIENTO') {\n  const [clienteId, fecha] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && fecha) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { proximo_vencimiento: fecha } };\n    response = `Vencimiento actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nif (action === 'SET_MONTO') {\n  const [clienteId, monto] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && monto) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { monto_mensual: monto } };\n    response = `Monto actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nreturn [{ json: { ...$json, response, update } }];"
       },
-      "id": "89348b31-1aaf-40a6-991b-3eb2e685d3ca",
+      "id": "ec7eb2e4-7821-489e-93fd-297e20f6dd9a",
       "name": "Preparar acción admin",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1552,
-        288
+        752,
+        480
       ]
     },
     {
       "parameters": {
         "jsCode": "const u = $json.update || {};\nconst data = (u.data || {});\nconst key = u.key || '';\nconst value = u.value || '';\nreturn [{ json: { ...data, [key]: value } }];"
       },
-      "id": "dc180eca-9901-4aeb-b7fc-51564c362636",
+      "id": "70cfe25b-346f-49d6-8057-da57ad062b95",
       "name": "Aplanar update.data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1648,
-        288
+        912,
+        480
       ]
     },
     {
@@ -659,13 +670,13 @@
         },
         "options": {}
       },
-      "id": "3f04fce1-2281-413c-b626-1a85d4ced342",
+      "id": "8954b449-6a09-40c5-9144-0347d688cbcc",
       "name": "Update cliente",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1760,
-        192
+        1024,
+        384
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -781,13 +792,13 @@
         },
         "options": {}
       },
-      "id": "5de13796-1cd0-45a4-b94c-237a9557bc39",
+      "id": "000d2913-6da2-4405-be97-339eb9ff63e0",
       "name": "Update pago",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1760,
-        320
+        1024,
+        512
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -810,13 +821,13 @@
           "timeout": 10000
         }
       },
-      "id": "4c7a561f-ff8f-4d9b-8d59-f3214498d74c",
+      "id": "ef8b87e8-77a7-4f60-af13-4a4df0b9eea8",
       "name": "Enviar WhatsApp owner",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1984,
-        288
+        1280,
+        480
       ],
       "continueOnFail": true
     },
@@ -824,13 +835,13 @@
       "parameters": {
         "jsCode": "const resumen = ($json.response || '').slice(0, 120);\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: $json.whatsapp || '',\n    mensaje_usuario: resumen,\n    tipo_mensaje: 'ADMIN',\n    media_url: '',\n    procesado: 'SI'\n  }\n}];"
       },
-      "id": "8f81c96b-c74e-4b77-9e73-e1d790ab13a5",
+      "id": "327da5ff-e43a-4064-97d5-5a4f53f6e7ce",
       "name": "Preparar log admin",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2192,
-        368
+        1472,
+        480
       ]
     },
     {
@@ -918,13 +929,13 @@
         },
         "options": {}
       },
-      "id": "5568913d-51bf-4516-9b42-0b41e4edc5b9",
+      "id": "38a6a6e4-a5db-4d5d-9cd9-170e3594996d",
       "name": "Log admin",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        2400,
-        368
+        1664,
+        560
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1044,13 +1055,13 @@
         },
         "options": {}
       },
-      "id": "1d816e72-d414-41e2-b4b6-8081ab3df0ac",
+      "id": "d2a2fc36-0180-46f9-b7fa-b8eebc8414ac",
       "name": "Marcar buffer DONE (admin)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        2624,
-        368
+        1888,
+        560
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1079,13 +1090,13 @@
         },
         "options": {}
       },
-      "id": "e2d0ba08-b333-4a8e-8600-a2fd5c87c197",
+      "id": "c80c3b65-d5b5-4836-8dba-791b5426804e",
       "name": "Filtrar DONE (admin)",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        2592,
-        368
+        1856,
+        560
       ]
     },
     {
@@ -1102,13 +1113,13 @@
         },
         "options": {}
       },
-      "id": "ffc35e80-3b02-4d37-8f54-f1c7a25202e8",
+      "id": "51a183ba-9416-40ea-80ac-24890fa43a27",
       "name": "Read clientes",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        880,
-        528
+        144,
+        848
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1121,13 +1132,13 @@
       "parameters": {
         "jsCode": "const clientes = items.map(i => i.json);\nconst batch = ($items('Agrupar y debounce')[0] || {}).json || {};\nconst wa = batch.whatsapp || '';\nconst cliente = clientes.find(c => c.whatsapp === wa) || null;\nreturn [{ json: { ...batch, cliente } }];"
       },
-      "id": "1f5d19c1-a63c-4b71-a331-62ab08ac6bfd",
+      "id": "2b2e3f3f-d6b2-4aac-892e-bfcb138c4b55",
       "name": "Buscar cliente",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
-        528
+        368,
+        848
       ]
     },
     {
@@ -1142,13 +1153,13 @@
         },
         "options": {}
       },
-      "id": "c97f0fc9-bd44-4454-bb71-63e22621b930",
+      "id": "e9eea783-e6e4-4f78-840e-abf1247b1d8f",
       "name": "IF Cliente existe",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1328,
-        528
+        576,
+        848
       ]
     },
     {
@@ -1165,13 +1176,13 @@
           "timeout": 10000
         }
       },
-      "id": "dd2c37b9-4147-4920-aa51-8af9afd3e062",
+      "id": "2584a928-e489-495b-919a-bf439c4169f8",
       "name": "Enviar alta cliente",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1552,
-        432
+        800,
+        768
       ],
       "continueOnFail": true
     },
@@ -1179,13 +1190,13 @@
       "parameters": {
         "jsCode": "return [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: $json.whatsapp || '',\n    mensaje_usuario: 'Solicitud de alta enviada',\n    tipo_mensaje: 'NUEVO_CLIENTE',\n    media_url: '',\n    procesado: 'SI'\n  }\n}];"
       },
-      "id": "9d9f5ba1-e0e3-45b0-9958-3cdd11838f22",
+      "id": "ece879c8-81f2-461b-ad9b-89f1fce8adf7",
       "name": "Preparar log nuevo",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1760,
-        432
+        1024,
+        768
       ]
     },
     {
@@ -1273,13 +1284,13 @@
         },
         "options": {}
       },
-      "id": "71c2cdac-365a-4524-9151-9a07a5311966",
+      "id": "82261bfc-56c9-46a0-b853-0227060e7934",
       "name": "Log nuevo cliente",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1984,
-        432
+        1248,
+        768
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1399,13 +1410,13 @@
         },
         "options": {}
       },
-      "id": "7bcb5938-0e34-4798-a18d-c61c4e7fca62",
+      "id": "e332019a-4182-42ff-9994-dd0afdcd6713",
       "name": "Marcar buffer DONE (nuevo)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        2208,
-        432
+        1472,
+        624
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1434,13 +1445,13 @@
         },
         "options": {}
       },
-      "id": "91cddf5f-0a7a-4498-9395-2e74e104d00a",
+      "id": "9564a800-888f-4844-bb70-69ac6e594f2e",
       "name": "Filtrar DONE (nuevo)",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        2160,
-        432
+        1424,
+        624
       ]
     },
     {
@@ -1457,13 +1468,13 @@
         },
         "options": {}
       },
-      "id": "317a18be-3437-4435-ada4-b27691d5c111",
+      "id": "e8557fdd-effe-4d1b-bd60-658f591b2cf8",
       "name": "Read mensajes_log",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1552,
-        624
+        800,
+        976
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1476,13 +1487,13 @@
       "parameters": {
         "jsCode": "const cliente = $json.cliente;\nconst logs = $items('Read mensajes_log').map(i => i.json).filter(l => l.whatsapp === $json.whatsapp);\nconst lastLogs = logs.slice(-10);\nconst systemPrompt = 'Eres asistente de cobros y atención. Responde corto, claro, cordial. No inventes pagos. Si falta info, pregunta. No cambies de tema. Mantente en contexto del negocio. Si el usuario envía varios mensajes unidos, respóndelos juntos.';\nconst context = { cliente: cliente || {}, ultimos_mensajes: lastLogs };\nreturn [{ json: { ...$json, system_prompt: systemPrompt, context_json: JSON.stringify(context), user_input: $json.combined_text || '' } }];"
       },
-      "id": "be3f24a3-f1c7-4171-a4af-6f493c62ee65",
+      "id": "26556ac3-5f2b-4522-ad90-146be41bc8f1",
       "name": "Construir contexto",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1760,
-        624
+        1040,
+        976
       ]
     },
     {
@@ -1499,13 +1510,13 @@
           "timeout": 20000
         }
       },
-      "id": "f268da77-dd18-4e0d-b9cb-5faa85dbd8b4",
+      "id": "ace0132d-f7ae-44ee-93d7-48d2b16d335e",
       "name": "OpenAI Texto",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1984,
-        624
+        1264,
+        976
       ],
       "continueOnFail": true
     },
@@ -1513,13 +1524,13 @@
       "parameters": {
         "jsCode": "const fallback = 'Gracias por tu mensaje. ¿Podrías darme más detalles?';\nconst error = $json.error || ($json.response && $json.response.error) || null;\nconst outputText = ($json.output_text || '').trim();\nconst outputs = Array.isArray($json.output) ? $json.output : [];\nconst contentText = outputs\n  .flatMap(o => Array.isArray(o.content) ? o.content : [])\n  .map(c => (c.text || c.output_text || '').trim())\n  .filter(Boolean)\n  .join('\n');\nconst reply = (outputText || contentText || fallback).trim();\nconst openaiFailed = !!error || (!outputText && !contentText);\nconst errorMessage = error ? (error.message || JSON.stringify(error)) : (openaiFailed ? 'OpenAI response missing output_text/output.' : '');\nreturn [{ json: { ...$json, ai_reply: reply, openai_failed: openaiFailed, openai_error: errorMessage } }];"
       },
-      "id": "67730924-a714-4a7a-99bf-53f0bef57237",
+      "id": "60cfd5df-51f3-4634-b502-67590134dd96",
       "name": "Extraer respuesta IA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2208,
-        624
+        1488,
+        976
       ]
     },
     {
@@ -1534,13 +1545,13 @@
         },
         "options": {}
       },
-      "id": "9abda1a7-8885-46f8-9009-1510ddb36b1e",
+      "id": "caf1426b-43e1-4e17-a34d-692ebe2e06ff",
       "name": "IF Tiene imagen",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2432,
-        624
+        1696,
+        816
       ]
     },
     {
@@ -1550,13 +1561,13 @@
           "timeout": 10000
         }
       },
-      "id": "87ac55ed-d9bb-4cbd-9eb7-114af965e84c",
+      "id": "4972ec90-7002-49b0-bf23-e814461557f6",
       "name": "Get media url",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        2640,
-        544
+        1904,
+        736
       ],
       "continueOnFail": true
     },
@@ -1567,13 +1578,13 @@
           "timeout": 20000
         }
       },
-      "id": "786d1af9-4f30-42a4-8306-cb2fac8fdd95",
+      "id": "58651b2b-bb33-4048-9fc6-2f281f9ee7a3",
       "name": "Download media",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        2864,
-        544
+        2128,
+        736
       ],
       "continueOnFail": true
     },
@@ -1581,13 +1592,13 @@
       "parameters": {
         "jsCode": "const bin = $binary.data;\nif (!bin) return [{ json: { ...$json, image_data_url: '' } }];\nconst mime = bin.mimeType || 'image/jpeg';\nconst dataUrl = `data:${mime};base64,${bin.data}`;\nreturn [{ json: { ...$json, image_data_url: dataUrl } }];"
       },
-      "id": "bb26ff09-9187-4ab3-82e7-d4e8a10af7eb",
+      "id": "6c0c50d1-7cb9-42d4-a40e-9c21f3f47ff2",
       "name": "Preparar imagen",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3072,
-        544
+        2336,
+        736
       ]
     },
     {
@@ -1604,13 +1615,13 @@
           "timeout": 25000
         }
       },
-      "id": "e14d7912-da7b-4427-8ee0-5291e4d54fec",
+      "id": "46855c3d-027b-4866-a126-e0496295290d",
       "name": "OpenAI Vision",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        3264,
-        544
+        2528,
+        736
       ],
       "continueOnFail": true
     },
@@ -1618,13 +1629,13 @@
       "parameters": {
         "jsCode": "const cliente = $json.cliente;\nlet parsed = null;\ntry {\n  const outputText = ($json.output_text || '').trim();\n  const outputs = Array.isArray($json.output) ? $json.output : [];\n  const contentText = outputs\n    .flatMap(o => Array.isArray(o.content) ? o.content : [])\n    .map(c => (c.text || c.output_text || '').trim())\n    .filter(Boolean)\n    .join('');\n  const raw = outputText || contentText || '';\n  parsed = raw ? JSON.parse(raw) : null;\n} catch (e) {\n  parsed = null;\n}\nconst monto = Number(parsed && parsed.monto ? parsed.monto : 0);\nconst esperado = Number(cliente && cliente.monto_mensual ? cliente.monto_mensual : 0);\nconst diffOk = esperado ? (Math.abs(monto - esperado) / esperado) <= 0.05 : true;\nconst conf = Number(parsed && parsed.confidence_0_100 ? parsed.confidence_0_100 : 0);\nconst ok = parsed && conf >= 80 && diffOk;\nreturn [{ json: { ...$json, vision_data: parsed, vision_ok: !!ok } }];"
       },
-      "id": "2476c348-64bf-4fbd-a536-6b973233f54c",
+      "id": "6a99abf9-e861-4171-8ce6-0fc7c2e20101",
       "name": "Validar comprobante",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3488,
-        544
+        2752,
+        736
       ]
     },
     {
@@ -1639,26 +1650,26 @@
         },
         "options": {}
       },
-      "id": "f08245c0-023a-4393-b396-36b853a7a2ac",
+      "id": "8cebddf0-c293-48b6-ba4a-d3a0575846c4",
       "name": "IF Visión OK",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3712,
-        544
+        2976,
+        736
       ]
     },
     {
       "parameters": {
         "jsCode": "const v = $json.vision_data || {};\nconst pagoId = `pago_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;\nreturn [{\n  json: {\n    pago_id: pagoId,\n    cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n    whatsapp: $json.whatsapp || ($json.cliente && $json.cliente.whatsapp ? $json.cliente.whatsapp : ''),\n    monto: v.monto || '',\n    metodo_pago: v.entidad || '',\n    fecha_pago: v.fecha || '',\n    estado_pago: 'PENDIENTE_CONFIRMACION'\n  }\n}];"
       },
-      "id": "f4862e17-6fa6-4c99-8b2f-c63a259877eb",
+      "id": "8ae82c48-763a-4d62-b65f-a4006b4b5c17",
       "name": "Preparar pago",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3920,
-        464
+        3184,
+        656
       ]
     },
     {
@@ -1766,13 +1777,13 @@
         },
         "options": {}
       },
-      "id": "05fd74cf-5d96-40a8-a36e-c09094465a8c",
+      "id": "5d9c6468-4975-42e3-b190-c81fc421e452",
       "name": "Crear pago pendiente",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        4144,
-        464
+        3408,
+        656
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -1795,13 +1806,13 @@
           "timeout": 10000
         }
       },
-      "id": "a7c283e5-414e-4720-8dc7-6ea8ac790f63",
+      "id": "446b3870-4486-4778-9b70-b377d8eeca32",
       "name": "Avisar owner",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        4368,
-        464
+        3632,
+        656
       ],
       "continueOnFail": true
     },
@@ -1819,13 +1830,13 @@
           "timeout": 10000
         }
       },
-      "id": "9b1cb981-2085-44c7-970d-f0062ee10a89",
+      "id": "c068ed32-9685-453f-bae4-46a16392ad59",
       "name": "Avisar cliente pending",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        4592,
-        464
+        3856,
+        656
       ],
       "continueOnFail": true
     },
@@ -1843,13 +1854,13 @@
           "timeout": 10000
         }
       },
-      "id": "eaef522e-854f-4684-b957-9c1a797099f7",
+      "id": "79698155-509e-4b4a-af64-0e271a3ed6c8",
       "name": "Pedir datos",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        3920,
-        624
+        3184,
+        816
       ],
       "continueOnFail": true
     },
@@ -1867,13 +1878,13 @@
           "timeout": 10000
         }
       },
-      "id": "240e88a0-1f98-4d40-8343-b8bdede322fb",
+      "id": "1f1e778e-1c25-48a7-9300-608e44e572a0",
       "name": "Enviar respuesta IA",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        2640,
-        720
+        1904,
+        912
       ],
       "continueOnFail": true
     },
@@ -1881,13 +1892,13 @@
       "parameters": {
         "jsCode": "return [{\n  json: {\n    cliente_id: $json.cliente?.cliente_id || '',\n    ultimo_contacto: new Date().toISOString()\n  }\n}];"
       },
-      "id": "9523db3e-ffc2-46f5-94be-641e4257af35",
+      "id": "11da8e5b-4f99-4e06-a33e-3be6cf4745ab",
       "name": "Payload ultimo_contacto limpio",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2752,
-        720
+        2016,
+        912
       ]
     },
     {
@@ -1997,13 +2008,13 @@
         },
         "options": {}
       },
-      "id": "cf3e8069-e8a1-4fe4-a8a4-398df8f533eb",
+      "id": "c8db847b-6947-401b-9d68-dec9603b16ad",
       "name": "Actualizar ultimo_contacto",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        2864,
-        720
+        2128,
+        912
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -2123,13 +2134,13 @@
         },
         "options": {}
       },
-      "id": "abebaa10-1b5d-4ebd-b884-91931ecb4bb5",
+      "id": "cf03b31b-f3bb-468f-bc0a-acb959fa13ba",
       "name": "Marcar buffer DONE (cliente)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        3088,
-        720
+        2352,
+        912
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -2158,13 +2169,13 @@
         },
         "options": {}
       },
-      "id": "42e66374-87e9-47f8-a362-dfc78921fc70",
+      "id": "47e6c423-7d24-4755-9b08-59a562fcdbb8",
       "name": "Filtrar DONE (cliente)",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        3040,
-        720
+        2304,
+        912
       ]
     },
     {
@@ -2177,13 +2188,13 @@
           ]
         }
       },
-      "id": "9b7de312-c403-41ef-9102-966992e6518a",
+      "id": "d6d197be-4c96-4f04-b045-24a315ac90f6",
       "name": "Cron Recordatorios",
       "type": "n8n-nodes-base.cron",
       "typeVersion": 1,
       "position": [
-        0,
-        848
+        -720,
+        1200
       ]
     },
     {
@@ -2200,13 +2211,13 @@
         },
         "options": {}
       },
-      "id": "f575fa2d-ea68-4e37-812c-c2ebd3666e63",
+      "id": "1329cef3-08cb-439d-9012-00a02b458308",
       "name": "Read clientes (recordatorios)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        224,
-        848
+        -496,
+        1200
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -2229,13 +2240,13 @@
         },
         "options": {}
       },
-      "id": "5ea98408-5129-46fd-bba6-da6aef8fb462",
+      "id": "7180805e-62b2-4b2b-8cbe-9b0a9d741ec5",
       "name": "Read logs (recordatorios)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        448,
-        848
+        -272,
+        1200
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -2248,13 +2259,13 @@
       "parameters": {
         "jsCode": "const clientes = $items('Read clientes (recordatorios)').map(i => i.json);\nconst logs = $items('Read logs (recordatorios)').map(i => i.json);\nconst now = new Date();\n\nconst types = [\n  { name: 'RECORDATORIO_7D', diff: 7 },\n  { name: 'RECORDATORIO_2D', diff: 2 },\n  { name: 'VENCE_HOY', diff: 0 },\n  { name: 'SEGUIMIENTO_3D', diff: -3 },\n  { name: 'SEGUIMIENTO_7D', diff: -7 },\n  { name: 'MOROSO_14D', diff: -14 }\n];\n\nconst out = [];\nfor (const c of clientes) {\n  if (c.estado !== 'ACTIVO' || c.consentimiento_mensajes !== 'SI') continue;\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  if (!venc) continue;\n  const diffDays = Math.floor((venc - now) / (1000 * 60 * 60 * 24));\n  const match = types.find(t => diffDays === t.diff);\n  if (!match) continue;\n\n  const recordatorioId = `${c.cliente_id}_${match.name}_${c.proximo_vencimiento}`;\n  const already = logs.find(l => l.recordatorio_id === recordatorioId);\n  if (already) continue;\n\n  out.push({\n    json: {\n      cliente: c,\n      tipo_mensaje: match.name,\n      recordatorio_id: recordatorioId,\n      texto: `Hola ${c.nombre}, recordatorio: tu pago vence el ${c.proximo_vencimiento}. Si ya pagaste, ignora este mensaje.`\n    }\n  });\n}\n\nreturn out;"
       },
-      "id": "ba6fb54c-caa3-4cfc-b13e-d9aabf92db04",
+      "id": "125c3097-c9fb-4ee1-89cc-13ddee52cf64",
       "name": "Construir recordatorios",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        672,
-        848
+        -48,
+        1200
       ]
     },
     {
@@ -2271,13 +2282,13 @@
           "timeout": 10000
         }
       },
-      "id": "e872c17b-baa7-41ef-bf73-00c84ba484ce",
+      "id": "5ad58c0a-d41e-461e-aa17-1f5efa5e0769",
       "name": "Enviar recordatorio",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        880,
-        848
+        160,
+        1200
       ],
       "continueOnFail": true
     },
@@ -2285,13 +2296,13 @@
       "parameters": {
         "jsCode": "return [{\n  json: {\n    recordatorio_id: $json.recordatorio_id || '',\n    cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n    whatsapp: $json.cliente && $json.cliente.whatsapp ? $json.cliente.whatsapp : '',\n    mensaje: $json.texto || '',\n    fecha_envio: new Date().toISOString(),\n    enviado: 'SI'\n  }\n}];"
       },
-      "id": "94d7a9af-4aba-4e22-961e-f35af8b248b9",
+      "id": "f82ea194-c158-47b8-bb9b-2b8ec5fa93e2",
       "name": "Preparar log recordatorio",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1104,
-        928
+        384,
+        1280
       ]
     },
     {
@@ -2379,13 +2390,13 @@
         },
         "options": {}
       },
-      "id": "490628b6-c4f7-4ef0-b2a2-0a7fcbc701a2",
+      "id": "cda33394-03c8-4171-bcab-9d7ec2f9ada8",
       "name": "Log recordatorio",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1104,
-        848
+        384,
+        1200
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -2408,13 +2419,13 @@
           ]
         }
       },
-      "id": "ed557ff7-721c-43f8-8dc6-b8bad6fc49b7",
+      "id": "ee8da78a-f895-475b-842f-8ca5b3b20587",
       "name": "Cron Reportes",
       "type": "n8n-nodes-base.cron",
       "typeVersion": 1,
       "position": [
-        0,
-        1088
+        -720,
+        1440
       ]
     },
     {
@@ -2431,13 +2442,13 @@
         },
         "options": {}
       },
-      "id": "f9fa3a3e-2c48-45f1-9e8f-bfe45aa035d4",
+      "id": "6b587fdc-e402-4029-96ed-07dad1c07822",
       "name": "Read clientes (reportes)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        224,
-        1088
+        -496,
+        1440
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -2450,13 +2461,13 @@
       "parameters": {
         "jsCode": "const clientes = items.map(i => i.json).filter(c => c.estado === 'ACTIVO');\nconst now = new Date();\nlet porVencer = 0;\nlet venceHoy = 0;\nlet vencidos1a7 = 0;\nlet morosos = 0;\nlet montoEsperado = 0;\n\nfor (const c of clientes) {\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  if (!venc) continue;\n  const diff = Math.floor((venc - now) / (1000 * 60 * 60 * 24));\n  if (diff >= 0 && diff <= 2) porVencer += 1;\n  if (diff === 0) venceHoy += 1;\n  if (diff < 0 && diff >= -7) vencidos1a7 += 1;\n  if (diff <= -8) morosos += 1;\n  montoEsperado += Number(c.monto_mensual || 0);\n}\n\nconst texto = `Reporte: Activos ${clientes.length}. Por vencer (0-2): ${porVencer}. Vence hoy: ${venceHoy}. Vencidos 1-7: ${vencidos1a7}. Morosos 8+: ${morosos}. Monto esperado: ${montoEsperado}.`;\nreturn [{\n  json: {\n    texto,\n    fecha: now.toISOString().slice(0, 10),\n    total_clientes: clientes.length,\n    total_pagos: 0,\n    monto_total: montoEsperado,\n    mensajes_recibidos: 0,\n    observaciones: texto\n  }\n}];"
       },
-      "id": "3486f34a-9950-4b59-9690-f755ac0f12ea",
+      "id": "b480941c-066a-4dcd-88a9-4b80327551df",
       "name": "Construir reporte",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        448,
-        1088
+        -272,
+        1440
       ]
     },
     {
@@ -2473,13 +2484,13 @@
           "timeout": 10000
         }
       },
-      "id": "b551eb0c-dc1d-47ea-971e-e7e00d132f8c",
+      "id": "75966e42-f7f7-4804-8c4e-5c771dfb739a",
       "name": "Enviar reporte",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        672,
-        1088
+        -48,
+        1440
       ],
       "continueOnFail": true
     },
@@ -2487,13 +2498,13 @@
       "parameters": {
         "jsCode": "return [{\n  json: {\n    fecha: $json.fecha || new Date().toISOString().slice(0, 10),\n    total_clientes: $json.total_clientes || 0,\n    total_pagos: $json.total_pagos || 0,\n    monto_total: $json.monto_total || 0,\n    mensajes_recibidos: $json.mensajes_recibidos || 0,\n    observaciones: $json.observaciones || $json.texto || ''\n  }\n}];"
       },
-      "id": "9ebe9e09-3285-45f3-947f-40c706cff045",
+      "id": "560aab7a-206a-4cb7-ae8f-c58f5f263d2b",
       "name": "Preparar log reporte",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        880,
-        1168
+        160,
+        1520
       ]
     },
     {
@@ -2581,13 +2592,13 @@
         },
         "options": {}
       },
-      "id": "6719d10b-682a-40ea-90cd-1ade444d9b95",
+      "id": "d7972871-3695-4bec-abf1-99df9a698d7f",
       "name": "Log reporte",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        880,
-        1088
+        160,
+        1440
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -2600,39 +2611,39 @@
       "parameters": {
         "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
       },
-      "id": "7032bf9c-0990-44da-98f5-c056b3f2f502",
+      "id": "012a9807-f279-46ea-a606-569b172be0fd",
       "name": "Preparar buffer DONE (admin)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2480,
-        368
+        1744,
+        560
       ]
     },
     {
       "parameters": {
         "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
       },
-      "id": "cfba80f2-992f-49c1-91a1-3fd2156ca772",
+      "id": "63c664de-318b-465d-94a5-198317e00f6f",
       "name": "Preparar buffer DONE (nuevo)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2128,
-        432
+        1424,
+        768
       ]
     },
     {
       "parameters": {
         "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
       },
-      "id": "230e3994-eff7-4f43-8850-000598cfc7fe",
+      "id": "9b4f6f58-e583-45a0-9207-a49dcd026564",
       "name": "Preparar buffer DONE (cliente)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2960,
-        720
+        2224,
+        912
       ]
     },
     {
@@ -2640,26 +2651,26 @@
         "dataType": "string",
         "value1": "={{$json.update && $json.update.sheet ? $json.update.sheet : ''}}"
       },
-      "id": "3573f64d-dd14-45bb-87ca-2c266db77c7a",
+      "id": "8fd09984-2013-4bec-b8d3-fd33ed817ee9",
       "name": "Switch update.sheet",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 2,
       "position": [
-        1744,
-        288
+        1008,
+        480
       ]
     },
     {
       "parameters": {
         "jsCode": "return [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: $json.whatsapp || '',\n    mensaje_usuario: $json.user_input || $json.combined_text || '',\n    respuesta_ia: $json.ai_reply || '',\n    contexto: $json.context_json || ''\n  }\n}];"
       },
-      "id": "c4167342-568f-45dd-87aa-3bae4e840ac2",
+      "id": "a41b6940-92cc-4b98-9569-4ae07e3b1980",
       "name": "Preparar log respuesta IA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2640,
-        848
+        1904,
+        1040
       ]
     },
     {
@@ -2737,13 +2748,13 @@
         },
         "options": {}
       },
-      "id": "7b695880-c0cd-480c-be20-69a10128897e",
+      "id": "3dd3ad88-b38f-4a95-80fd-418e7942dc41",
       "name": "Log respuesta IA",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        2864,
-        848
+        2128,
+        1040
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -2753,6 +2764,7 @@
       }
     }
   ],
+  "pinData": {},
   "connections": {
     "Webhook In": {
       "main": [
@@ -3473,8 +3485,7 @@
             "type": "main",
             "index": 0
           }
-        ],
-        []
+        ]
       ]
     },
     "IF Token válido (verify)": {
@@ -3507,3443 +3518,20 @@
       ]
     }
   },
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": false
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1
   },
-  "staticData": null,
-  "meta": null,
-  "pinData": {},
-  "versionId": "9f62a272-6844-4c2e-9a08-6a11307db2c2",
-  "activeVersionId": "166a92c4-9650-4518-98c8-a3152cb8840b",
-  "versionCounter": 33,
-  "triggerCount": 4,
-  "shared": [
-    {
-      "updatedAt": "2026-02-06T21:16:26.715Z",
-      "createdAt": "2026-02-06T21:16:26.715Z",
-      "role": "workflow:owner",
-      "workflowId": "__2cWlvvhExh0VkwuWIg_",
-      "projectId": "G8LoP9b30eMqXQMJ",
-      "project": {
-        "updatedAt": "2026-02-03T03:29:44.168Z",
-        "createdAt": "2026-02-03T03:28:41.340Z",
-        "id": "G8LoP9b30eMqXQMJ",
-        "name": "Jair Tarrillo <n8n01@superzylo.online>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "creatorId": "3748f10f-b280-4605-9ad5-89b0badf5f8f",
-        "projectRelations": [
-          {
-            "updatedAt": "2026-02-03T03:28:41.340Z",
-            "createdAt": "2026-02-03T03:28:41.340Z",
-            "userId": "3748f10f-b280-4605-9ad5-89b0badf5f8f",
-            "projectId": "G8LoP9b30eMqXQMJ",
-            "user": {
-              "updatedAt": "2026-02-07T16:39:10.000Z",
-              "createdAt": "2026-02-03T03:28:41.172Z",
-              "id": "3748f10f-b280-4605-9ad5-89b0badf5f8f",
-              "email": "n8n01@superzylo.online",
-              "firstName": "Jair",
-              "lastName": "Tarrillo",
-              "personalizationAnswers": {
-                "version": "v4",
-                "personalization_survey_submitted_at": "2026-02-03T03:29:49.977Z",
-                "personalization_survey_n8n_version": "2.6.3"
-              },
-              "settings": {
-                "userActivated": false,
-                "easyAIWorkflowOnboarded": true
-              },
-              "disabled": false,
-              "mfaEnabled": false,
-              "lastActiveAt": "2026-02-07",
-              "isPending": false
-            }
-          }
-        ]
-      }
-    }
-  ],
-  "tags": [],
-  "parentFolder": null,
-  "activeVersion": {
-    "updatedAt": "2026-02-07T06:00:27.000Z",
-    "createdAt": "2026-02-07T06:00:17.063Z",
-    "versionId": "166a92c4-9650-4518-98c8-a3152cb8840b",
-    "workflowId": "__2cWlvvhExh0VkwuWIg_",
-    "nodes": [
-      {
-        "parameters": {
-          "httpMethod": "POST",
-          "path": "whatsapp-in",
-          "options": {}
-        },
-        "id": "6da78eeb-4bd7-46b7-8e36-7fd9d9770bc6",
-        "name": "Webhook In",
-        "type": "n8n-nodes-base.webhook",
-        "typeVersion": 1,
-        "position": [
-          0,
-          0
-        ],
-        "webhookId": "f80acfa6-40ba-405e-92c0-2eae4f97dc35"
-      },
-      {
-        "parameters": {
-          "jsCode": "const data = $json;\nconst headers = $headers ?? data.headers ?? {};\nconst query = data.query ?? {};\nconst payload = data.body ?? data;\nconst secret = headers['x-origin-secret'] || headers['X-Origin-Secret'] || query.secret;\nconst validSecret = secret === $env.ORIGIN_SECRET;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0] ?? {};\n\nconst from = message.from ?? '';\nconst messageId = message.id ?? '';\nconst timestamp = message.timestamp ? new Date(parseInt(message.timestamp, 10) * 1000).toISOString() : new Date().toISOString();\nconst type = message.type || 'text';\n\nlet text = '';\nlet mediaId = '';\nlet mediaMime = '';\n\nif (type === 'text') {\n  text = message.text?.body || '';\n} else if (type === 'image') {\n  mediaId = message.image?.id || '';\n  mediaMime = message.image?.mime_type || '';\n  text = message.image?.caption || '';\n} else if (type === 'document') {\n  mediaId = message.document?.id || '';\n  mediaMime = message.document?.mime_type || '';\n  text = message.document?.caption || '';\n}\n\nconst normalizePhone = (raw) => {\n  const digits = (raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    valid_secret: !!validSecret,\n    timestamp,\n    whatsapp: normalizePhone(from),\n    message_id: messageId,\n    message_type: mediaId ? 'media' : 'text',\n    text: text || '',\n    media_id: mediaId || '',\n    media_mime: mediaMime || ''\n  }\n}];"
-        },
-        "id": "af64a225-9507-4fd6-9263-36b421afa835",
-        "name": "Normalizar y validar",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          224,
-          0
-        ]
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "boolean": [
-              {
-                "value1": "={{$json.valid_secret}}",
-                "value2": true
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "fb8437e8-1d14-42e7-bc2d-bf598f37099b",
-        "name": "IF Secret válido",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2,
-        "position": [
-          448,
-          0
-        ]
-      },
-      {
-        "parameters": {
-          "values": {
-            "string": [
-              {
-                "name": "timestamp",
-                "value": "={{$json.timestamp}}"
-              },
-              {
-                "name": "whatsapp",
-                "value": "={{$json.whatsapp}}"
-              },
-              {
-                "name": "message_id",
-                "value": "={{$json.message_id}}"
-              },
-              {
-                "name": "message_type",
-                "value": "={{$json.message_type}}"
-              },
-              {
-                "name": "text",
-                "value": "={{$json.text}}"
-              },
-              {
-                "name": "media_id",
-                "value": "={{$json.media_id}}"
-              },
-              {
-                "name": "media_mime",
-                "value": "={{$json.media_mime}}"
-              },
-              {
-                "name": "status",
-                "value": "PENDING"
-              },
-              {
-                "name": "batch_id"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "0f902711-e057-4a70-9e99-150ce3400f16",
-        "name": "Preparar buffer",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 2,
-        "position": [
-          672,
-          0
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "append",
-          "documentId": {
-            "__rl": true,
-            "value": "1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "inbox_buffer",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "timestamp": "={{$json.timestamp}}",
-              "whatsapp": "={{$json.whatsapp}}",
-              "message_id": "={{$json.message_id}}",
-              "message_type": "={{$json.message_type}}",
-              "text": "={{$json.text}}",
-              "media_id": "={{$json.media_id}}",
-              "media_mime": "={{$json.media_mime}}",
-              "status": "={{$json.status}}",
-              "batch_id": "={{$json.batch_id}}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "timestamp",
-                "displayName": "timestamp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "whatsapp",
-                "displayName": "whatsapp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "message_id",
-                "displayName": "message_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "message_type",
-                "displayName": "message_type",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "text",
-                "displayName": "text",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "media_id",
-                "displayName": "media_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "media_mime",
-                "displayName": "media_mime",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "status",
-                "displayName": "status",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "batch_id",
-                "displayName": "batch_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "1c1ad042-269d-4c84-83f8-34556ddf5df8",
-        "name": "Append inbox_buffer",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          880,
-          0
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "options": {}
-        },
-        "id": "e297ab93-2794-4cef-85d8-085060d48b6d",
-        "name": "Respond OK",
-        "type": "n8n-nodes-base.respondToWebhook",
-        "typeVersion": 1,
-        "position": [
-          1104,
-          0
-        ]
-      },
-      {
-        "parameters": {
-          "options": {}
-        },
-        "id": "33c4b6b0-0cf0-4301-ac10-c43e81789028",
-        "name": "Respond OK (invalid)",
-        "type": "n8n-nodes-base.respondToWebhook",
-        "typeVersion": 1,
-        "position": [
-          880,
-          192
-        ]
-      },
-      {
-        "parameters": {
-          "triggerTimes": {
-            "item": [
-              {
-                "mode": "everyX",
-                "value": 1,
-                "unit": "minutes"
-              }
-            ]
-          }
-        },
-        "id": "71bc2b87-740e-4f04-bb80-494440f8130d",
-        "name": "Cron Procesador",
-        "type": "n8n-nodes-base.cron",
-        "typeVersion": 1,
-        "position": [
-          0,
-          400
-        ]
-      },
-      {
-        "parameters": {
-          "documentId": {
-            "__rl": true,
-            "value": "1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "inbox_buffer",
-            "mode": "list"
-          },
-          "options": {}
-        },
-        "id": "0be60467-88f8-429c-ab36-fc19ff8a822f",
-        "name": "Read inbox_buffer",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          224,
-          400
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "const WINDOW_SEC = Number($env.WINDOW_SEC || 12);\nconst now = Date.now();\nconst rows = items.map(i => i.json);\nconst pending = rows.filter(r => r.status === 'PENDING');\n\nconst byWhatsapp = {};\nfor (const row of pending) {\n  const wa = row.whatsapp || '';\n  if (!wa) continue;\n  if (!byWhatsapp[wa]) byWhatsapp[wa] = [];\n  byWhatsapp[wa].push(row);\n}\n\nconst output = [];\nfor (const [wa, msgs] of Object.entries(byWhatsapp)) {\n  const sorted = msgs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());\n  const last = sorted[sorted.length - 1];\n  const ageSec = (now - new Date(last.timestamp).getTime()) / 1000;\n  if (ageSec < WINDOW_SEC) continue;\n\n  const combinedText = sorted.map(m => m.text).filter(Boolean).join('\n');\n  const hasImage = sorted.some(m => (m.media_mime || '').startsWith('image/'));\n  const mediaIds = sorted.filter(m => (m.media_mime || '').startsWith('image/')).map(m => m.media_id).filter(Boolean);\n  const pendingTimestamps = sorted.map(m => m.timestamp);\n  const pendingMessageIds = sorted.map(m => m.message_id).filter(Boolean);\n\n  output.push({\n    json: {\n      whatsapp: wa,\n      combined_text: combinedText,\n      has_image: hasImage,\n      media_ids: mediaIds,\n      pending_timestamps: pendingTimestamps,\n      pending_message_ids: pendingMessageIds,\n      last_message_at: last.timestamp,\n      batch_id: `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`\n    }\n  });\n}\n\nreturn output;"
-        },
-        "id": "7447fe38-d07c-4232-91e7-8a58901edacc",
-        "name": "Agrupar y debounce",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          448,
-          400
-        ]
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "string": [
-              {
-                "value1": "={{$json.whatsapp}}",
-                "operation": "equals",
-                "value2": "={{$env.OWNER_WHATSAPP}}"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "c8225fdc-e6ec-4085-9302-4319887eb8e7",
-        "name": "IF Owner",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2,
-        "position": [
-          672,
-          400
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "const text = ($json.combined_text || '').trim();\nconst upper = text.toUpperCase();\nlet action = 'UNKNOWN';\nlet args = [];\n\nconst parts = text.split(/[ ]+/);\n\nif (upper.startsWith('BUSCAR CLIENTE')) {\n  action = 'BUSCAR_CLIENTE';\n  args = [text.replace(/BUSCAR CLIENTE[ ]*/i, '')];\n} else if (upper.startsWith('CONFIRMAR PAGO')) {\n  action = 'CONFIRMAR_PAGO';\n  args = [text.replace(/CONFIRMAR PAGO[ ]*/i, '')];\n} else if (upper.startsWith('RECHAZAR PAGO')) {\n  action = 'RECHAZAR_PAGO';\n  args = [text.replace(/RECHAZAR PAGO[ ]*/i, '')];\n} else if (upper.startsWith('ACTUALIZAR LINK')) {\n  action = 'ACTUALIZAR_LINK';\n  args = parts.slice(2);\n} else if (upper.startsWith('SUSPENDER')) {\n  action = 'SUSPENDER';\n  args = [parts[1]];\n} else if (upper.startsWith('ACTIVAR')) {\n  action = 'ACTIVAR';\n  args = [parts[1]];\n} else if (upper.startsWith('SET VENCIMIENTO')) {\n  action = 'SET_VENCIMIENTO';\n  args = parts.slice(2);\n} else if (upper.startsWith('SET MONTO')) {\n  action = 'SET_MONTO';\n  args = parts.slice(2);\n}\n\nreturn [{ json: { ...$json, action, args } }];"
-        },
-        "id": "d3b30faa-60d7-48d1-baf8-3f5d5d17d8b5",
-        "name": "Parse comando admin",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          880,
-          288
-        ]
-      },
-      {
-        "parameters": {
-          "documentId": {
-            "__rl": true,
-            "value": "18xZp5Spwm8i1RCtk6R9pHvt8cNJJzwK_1FSqHcaivTo",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Clientes",
-            "mode": "list"
-          },
-          "options": {}
-        },
-        "id": "4073dfb8-a207-48cc-bdd5-bb8545e141f4",
-        "name": "Read clientes (admin)",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          1104,
-          288
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "documentId": {
-            "__rl": true,
-            "value": "1Xgk1mAXzLt-y5T8apWh0Fq8M9lK_EwYEeU80KGMPWJY",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Pagos",
-            "mode": "list"
-          },
-          "options": {}
-        },
-        "id": "c71cee0f-8061-4f7f-9804-79c40ee72ceb",
-        "name": "Read pagos (admin)",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          1328,
-          288
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "const clientes = $items('Read clientes (admin)').map(i => i.json);\nconst pagos = $items('Read pagos (admin)').map(i => i.json);\nconst { action, args } = $json;\nlet response = 'Comando no reconocido.';\nlet update = null;\n\nconst findClienteById = (id) => clientes.find(c => c.cliente_id === id);\nconst findPagoById = (id) => pagos.find(p => p.pago_id === id);\n\nif (action === 'BUSCAR_CLIENTE') {\n  const q = (args[0] || '').toLowerCase();\n  const matches = clientes.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.whatsapp || '').includes(q));\n  response = matches.length ? matches.map(c => `${c.cliente_id} | ${c.nombre} | ${c.whatsapp} | ${c.estado}`).join('\n') : 'Sin resultados.';\n}\n\nif (action === 'CONFIRMAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado_pago: 'CONFIRMADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} confirmado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'RECHAZAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado_pago: 'RECHAZADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} rechazado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'ACTUALIZAR_LINK') {\n  const [clienteId, url] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && url) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { link_pago: url } };\n    response = `Link actualizado para ${clienteId}.`;\n  } else {\n    response = 'Cliente o URL inválido.';\n  }\n}\n\nif (action === 'SUSPENDER') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'SUSPENDIDO' } };\n    response = `Cliente ${clienteId} suspendido.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'ACTIVAR') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'ACTIVO' } };\n    response = `Cliente ${clienteId} activado.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'SET_VENCIMIENTO') {\n  const [clienteId, fecha] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && fecha) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { proximo_vencimiento: fecha } };\n    response = `Vencimiento actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nif (action === 'SET_MONTO') {\n  const [clienteId, monto] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && monto) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { monto_mensual: monto } };\n    response = `Monto actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nreturn [{ json: { ...$json, response, update } }];"
-        },
-        "id": "89348b31-1aaf-40a6-991b-3eb2e685d3ca",
-        "name": "Preparar acción admin",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1552,
-          288
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "const u = $json.update || {};\nconst data = (u.data || {});\nconst key = u.key || '';\nconst value = u.value || '';\nreturn [{ json: { ...data, [key]: value } }];"
-        },
-        "id": "dc180eca-9901-4aeb-b7fc-51564c362636",
-        "name": "Aplanar update.data",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1648,
-          288
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "update",
-          "documentId": {
-            "__rl": true,
-            "value": "18xZp5Spwm8i1RCtk6R9pHvt8cNJJzwK_1FSqHcaivTo",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Clientes",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "cliente_id": "={{$json.cliente_id}}",
-              "whatsapp": "={{$json.whatsapp}}",
-              "nombre": "={{$json.nombre}}",
-              "estado": "={{$json.estado}}",
-              "fecha_registro": "={{$json.fecha_registro}}",
-              "ultimo_contacto": "={{$json.ultimo_contacto}}",
-              "saldo": "={{$json.saldo}}",
-              "notas": "={{$json.notas}}"
-            },
-            "matchingColumns": [
-              "cliente_id"
-            ],
-            "schema": [
-              {
-                "id": "cliente_id",
-                "displayName": "cliente_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "whatsapp",
-                "displayName": "whatsapp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "nombre",
-                "displayName": "nombre",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "estado",
-                "displayName": "estado",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "fecha_registro",
-                "displayName": "fecha_registro",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "ultimo_contacto",
-                "displayName": "ultimo_contacto",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "saldo",
-                "displayName": "saldo",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "notas",
-                "displayName": "notas",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "3f04fce1-2281-413c-b626-1a85d4ced342",
-        "name": "Update cliente",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          1760,
-          192
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "operation": "update",
-          "documentId": {
-            "__rl": true,
-            "value": "1Xgk1mAXzLt-y5T8apWh0Fq8M9lK_EwYEeU80KGMPWJY",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Pagos",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "pago_id": "={{$json.pago_id}}",
-              "cliente_id": "={{$json.cliente_id}}",
-              "whatsapp": "={{$json.whatsapp}}",
-              "monto": "={{$json.monto}}",
-              "metodo_pago": "={{$json.metodo_pago}}",
-              "fecha_pago": "={{$json.fecha_pago}}",
-              "estado_pago": "={{$json.estado_pago}}",
-              "validado_por": "={{$json.validado_por}}"
-            },
-            "matchingColumns": [
-              "pago_id"
-            ],
-            "schema": [
-              {
-                "id": "pago_id",
-                "displayName": "pago_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "cliente_id",
-                "displayName": "cliente_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "whatsapp",
-                "displayName": "whatsapp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "monto",
-                "displayName": "monto",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "metodo_pago",
-                "displayName": "metodo_pago",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "fecha_pago",
-                "displayName": "fecha_pago",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "estado_pago",
-                "displayName": "estado_pago",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "validado_por",
-                "displayName": "validado_por",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "5de13796-1cd0-45a4-b94c-237a9557bc39",
-        "name": "Update pago",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          1760,
-          320
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "={{$env.WHATSAPP_API_URL}}",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {}
-            ]
-          },
-          "options": {
-            "timeout": 10000
-          }
-        },
-        "id": "4c7a561f-ff8f-4d9b-8d59-f3214498d74c",
-        "name": "Enviar WhatsApp owner",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4,
-        "position": [
-          1984,
-          288
-        ],
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "jsCode": "const resumen = ($json.response || '').slice(0, 120);\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: $json.whatsapp || '',\n    mensaje_usuario: resumen,\n    tipo_mensaje: 'ADMIN',\n    media_url: '',\n    procesado: 'SI'\n  }\n}];"
-        },
-        "id": "8f81c96b-c74e-4b77-9e73-e1d790ab13a5",
-        "name": "Preparar log admin",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          2192,
-          368
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "append",
-          "documentId": {
-            "__rl": true,
-            "value": "1mjE-GZk_bxGMoSiipXEzYyNHMTmnLFQwC4i3_RsTLb4",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "mensajes_log",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "timestamp": "={{$json.timestamp}}",
-              "whatsapp": "={{$json.whatsapp}}",
-              "mensaje_usuario": "={{$json.mensaje_usuario}}",
-              "tipo_mensaje": "={{$json.tipo_mensaje}}",
-              "media_url": "={{$json.media_url}}",
-              "procesado": "={{$json.procesado}}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "timestamp",
-                "displayName": "timestamp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "whatsapp",
-                "displayName": "whatsapp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "mensaje_usuario",
-                "displayName": "mensaje_usuario",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "tipo_mensaje",
-                "displayName": "tipo_mensaje",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "media_url",
-                "displayName": "media_url",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "procesado",
-                "displayName": "procesado",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "5568913d-51bf-4516-9b42-0b41e4edc5b9",
-        "name": "Log admin",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          2400,
-          368
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "operation": "update",
-          "documentId": {
-            "__rl": true,
-            "value": "1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "inbox_buffer",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "message_id": "={{$json.message_id}}",
-              "status": "={{$json.status}}",
-              "batch_id": "={{$json.batch_id}}"
-            },
-            "matchingColumns": [
-              "message_id"
-            ],
-            "schema": [
-              {
-                "id": "timestamp",
-                "displayName": "timestamp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "whatsapp",
-                "displayName": "whatsapp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "message_id",
-                "displayName": "message_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "message_type",
-                "displayName": "message_type",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "text",
-                "displayName": "text",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "media_id",
-                "displayName": "media_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "media_mime",
-                "displayName": "media_mime",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "status",
-                "displayName": "status",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "batch_id",
-                "displayName": "batch_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "1d816e72-d414-41e2-b4b6-8081ab3df0ac",
-        "name": "Marcar buffer DONE (admin)",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          2624,
-          368
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "values": {
-            "string": [
-              {
-                "name": "message_id",
-                "value": "={{$json.message_id}}"
-              },
-              {
-                "name": "status",
-                "value": "={{$json.status}}"
-              },
-              {
-                "name": "batch_id",
-                "value": "={{$json.batch_id}}"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "e2d0ba08-b333-4a8e-8600-a2fd5c87c197",
-        "name": "Filtrar DONE (admin)",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 2,
-        "position": [
-          2592,
-          368
-        ]
-      },
-      {
-        "parameters": {
-          "documentId": {
-            "__rl": true,
-            "value": "18xZp5Spwm8i1RCtk6R9pHvt8cNJJzwK_1FSqHcaivTo",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Clientes",
-            "mode": "list"
-          },
-          "options": {}
-        },
-        "id": "ffc35e80-3b02-4d37-8f54-f1c7a25202e8",
-        "name": "Read clientes",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          880,
-          528
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "const clientes = items.map(i => i.json);\nconst batch = ($items('Agrupar y debounce')[0] || {}).json || {};\nconst wa = batch.whatsapp || '';\nconst cliente = clientes.find(c => c.whatsapp === wa) || null;\nreturn [{ json: { ...batch, cliente } }];"
-        },
-        "id": "1f5d19c1-a63c-4b71-a331-62ab08ac6bfd",
-        "name": "Buscar cliente",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1104,
-          528
-        ]
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "boolean": [
-              {
-                "value1": "={{!!$json.cliente}}",
-                "value2": true
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "c97f0fc9-bd44-4454-bb71-63e22621b930",
-        "name": "IF Cliente existe",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2,
-        "position": [
-          1328,
-          528
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "={{$env.WHATSAPP_API_URL}}",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {}
-            ]
-          },
-          "options": {
-            "timeout": 10000
-          }
-        },
-        "id": "dd2c37b9-4147-4920-aa51-8af9afd3e062",
-        "name": "Enviar alta cliente",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4,
-        "position": [
-          1552,
-          432
-        ],
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "jsCode": "return [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: $json.whatsapp || '',\n    mensaje_usuario: 'Solicitud de alta enviada',\n    tipo_mensaje: 'NUEVO_CLIENTE',\n    media_url: '',\n    procesado: 'SI'\n  }\n}];"
-        },
-        "id": "9d9f5ba1-e0e3-45b0-9958-3cdd11838f22",
-        "name": "Preparar log nuevo",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1760,
-          432
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "append",
-          "documentId": {
-            "__rl": true,
-            "value": "1mjE-GZk_bxGMoSiipXEzYyNHMTmnLFQwC4i3_RsTLb4",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "mensajes_log",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "timestamp": "={{$json.timestamp}}",
-              "whatsapp": "={{$json.whatsapp}}",
-              "mensaje_usuario": "={{$json.mensaje_usuario}}",
-              "tipo_mensaje": "={{$json.tipo_mensaje}}",
-              "media_url": "={{$json.media_url}}",
-              "procesado": "={{$json.procesado}}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "timestamp",
-                "displayName": "timestamp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "whatsapp",
-                "displayName": "whatsapp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "mensaje_usuario",
-                "displayName": "mensaje_usuario",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "tipo_mensaje",
-                "displayName": "tipo_mensaje",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "media_url",
-                "displayName": "media_url",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "procesado",
-                "displayName": "procesado",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "71c2cdac-365a-4524-9151-9a07a5311966",
-        "name": "Log nuevo cliente",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          1984,
-          432
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "operation": "update",
-          "documentId": {
-            "__rl": true,
-            "value": "1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "inbox_buffer",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "message_id": "={{$json.message_id}}",
-              "status": "={{$json.status}}",
-              "batch_id": "={{$json.batch_id}}"
-            },
-            "matchingColumns": [
-              "message_id"
-            ],
-            "schema": [
-              {
-                "id": "timestamp",
-                "displayName": "timestamp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "whatsapp",
-                "displayName": "whatsapp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "message_id",
-                "displayName": "message_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "message_type",
-                "displayName": "message_type",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "text",
-                "displayName": "text",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "media_id",
-                "displayName": "media_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "media_mime",
-                "displayName": "media_mime",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "status",
-                "displayName": "status",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "batch_id",
-                "displayName": "batch_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "7bcb5938-0e34-4798-a18d-c61c4e7fca62",
-        "name": "Marcar buffer DONE (nuevo)",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          2208,
-          432
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "values": {
-            "string": [
-              {
-                "name": "message_id",
-                "value": "={{$json.message_id}}"
-              },
-              {
-                "name": "status",
-                "value": "={{$json.status}}"
-              },
-              {
-                "name": "batch_id",
-                "value": "={{$json.batch_id}}"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "91cddf5f-0a7a-4498-9395-2e74e104d00a",
-        "name": "Filtrar DONE (nuevo)",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 2,
-        "position": [
-          2160,
-          432
-        ]
-      },
-      {
-        "parameters": {
-          "documentId": {
-            "__rl": true,
-            "value": "1mjE-GZk_bxGMoSiipXEzYyNHMTmnLFQwC4i3_RsTLb4",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "mensajes_log",
-            "mode": "list"
-          },
-          "options": {}
-        },
-        "id": "317a18be-3437-4435-ada4-b27691d5c111",
-        "name": "Read mensajes_log",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          1552,
-          624
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "const cliente = $json.cliente;\nconst logs = $items('Read mensajes_log').map(i => i.json).filter(l => l.whatsapp === $json.whatsapp);\nconst lastLogs = logs.slice(-10);\nconst systemPrompt = 'Eres asistente de cobros y atención. Responde corto, claro, cordial. No inventes pagos. Si falta info, pregunta. No cambies de tema. Mantente en contexto del negocio. Si el usuario envía varios mensajes unidos, respóndelos juntos.';\nconst context = { cliente: cliente || {}, ultimos_mensajes: lastLogs };\nreturn [{ json: { ...$json, system_prompt: systemPrompt, context_json: JSON.stringify(context), user_input: $json.combined_text || '' } }];"
-        },
-        "id": "be3f24a3-f1c7-4171-a4af-6f493c62ee65",
-        "name": "Construir contexto",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1760,
-          624
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.openai.com/v1/responses",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {}
-            ]
-          },
-          "options": {
-            "timeout": 20000
-          }
-        },
-        "id": "f268da77-dd18-4e0d-b9cb-5faa85dbd8b4",
-        "name": "OpenAI Texto",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4,
-        "position": [
-          1984,
-          624
-        ],
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "jsCode": "const fallback = 'Gracias por tu mensaje. ¿Podrías darme más detalles?';\nconst error = $json.error || ($json.response && $json.response.error) || null;\nconst outputText = ($json.output_text || '').trim();\nconst outputs = Array.isArray($json.output) ? $json.output : [];\nconst contentText = outputs\n  .flatMap(o => Array.isArray(o.content) ? o.content : [])\n  .map(c => (c.text || c.output_text || '').trim())\n  .filter(Boolean)\n  .join('\n');\nconst reply = (outputText || contentText || fallback).trim();\nconst openaiFailed = !!error || (!outputText && !contentText);\nconst errorMessage = error ? (error.message || JSON.stringify(error)) : (openaiFailed ? 'OpenAI response missing output_text/output.' : '');\nreturn [{ json: { ...$json, ai_reply: reply, openai_failed: openaiFailed, openai_error: errorMessage } }];"
-        },
-        "id": "67730924-a714-4a7a-99bf-53f0bef57237",
-        "name": "Extraer respuesta IA",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          2208,
-          624
-        ]
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "boolean": [
-              {
-                "value1": "={{$json.has_image}}",
-                "value2": true
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "9abda1a7-8885-46f8-9009-1510ddb36b1e",
-        "name": "IF Tiene imagen",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2,
-        "position": [
-          2432,
-          624
-        ]
-      },
-      {
-        "parameters": {
-          "url": "={{$env.WHATSAPP_GRAPH_URL}}/{{$json.media_ids[0]}}",
-          "options": {
-            "timeout": 10000
-          }
-        },
-        "id": "87ac55ed-d9bb-4cbd-9eb7-114af965e84c",
-        "name": "Get media url",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4,
-        "position": [
-          2640,
-          544
-        ],
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "url": "={{$json.url}}",
-          "options": {
-            "timeout": 20000
-          }
-        },
-        "id": "786d1af9-4f30-42a4-8306-cb2fac8fdd95",
-        "name": "Download media",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4,
-        "position": [
-          2864,
-          544
-        ],
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "jsCode": "const bin = $binary.data;\nif (!bin) return [{ json: { ...$json, image_data_url: '' } }];\nconst mime = bin.mimeType || 'image/jpeg';\nconst dataUrl = `data:${mime};base64,${bin.data}`;\nreturn [{ json: { ...$json, image_data_url: dataUrl } }];"
-        },
-        "id": "bb26ff09-9187-4ab3-82e7-d4e8a10af7eb",
-        "name": "Preparar imagen",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          3072,
-          544
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.openai.com/v1/responses",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {}
-            ]
-          },
-          "options": {
-            "timeout": 25000
-          }
-        },
-        "id": "e14d7912-da7b-4427-8ee0-5291e4d54fec",
-        "name": "OpenAI Vision",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4,
-        "position": [
-          3264,
-          544
-        ],
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "jsCode": "const cliente = $json.cliente;\nlet parsed = null;\ntry {\n  const outputText = ($json.output_text || '').trim();\n  const outputs = Array.isArray($json.output) ? $json.output : [];\n  const contentText = outputs\n    .flatMap(o => Array.isArray(o.content) ? o.content : [])\n    .map(c => (c.text || c.output_text || '').trim())\n    .filter(Boolean)\n    .join('');\n  const raw = outputText || contentText || '';\n  parsed = raw ? JSON.parse(raw) : null;\n} catch (e) {\n  parsed = null;\n}\nconst monto = Number(parsed && parsed.monto ? parsed.monto : 0);\nconst esperado = Number(cliente && cliente.monto_mensual ? cliente.monto_mensual : 0);\nconst diffOk = esperado ? (Math.abs(monto - esperado) / esperado) <= 0.05 : true;\nconst conf = Number(parsed && parsed.confidence_0_100 ? parsed.confidence_0_100 : 0);\nconst ok = parsed && conf >= 80 && diffOk;\nreturn [{ json: { ...$json, vision_data: parsed, vision_ok: !!ok } }];"
-        },
-        "id": "2476c348-64bf-4fbd-a536-6b973233f54c",
-        "name": "Validar comprobante",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          3488,
-          544
-        ]
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "boolean": [
-              {
-                "value1": "={{$json.vision_ok}}",
-                "value2": true
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "f08245c0-023a-4393-b396-36b853a7a2ac",
-        "name": "IF Visión OK",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2,
-        "position": [
-          3712,
-          544
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "const v = $json.vision_data || {};\nconst pagoId = `pago_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;\nreturn [{\n  json: {\n    pago_id: pagoId,\n    cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n    whatsapp: $json.whatsapp || ($json.cliente && $json.cliente.whatsapp ? $json.cliente.whatsapp : ''),\n    monto: v.monto || '',\n    metodo_pago: v.entidad || '',\n    fecha_pago: v.fecha || '',\n    estado_pago: 'PENDIENTE_CONFIRMACION'\n  }\n}];"
-        },
-        "id": "f4862e17-6fa6-4c99-8b2f-c63a259877eb",
-        "name": "Preparar pago",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          3920,
-          464
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "append",
-          "documentId": {
-            "__rl": true,
-            "value": "1Xgk1mAXzLt-y5T8apWh0Fq8M9lK_EwYEeU80KGMPWJY",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Pagos",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "pago_id": "={{$json.pago_id}}",
-              "cliente_id": "={{$json.cliente_id}}",
-              "whatsapp": "={{$json.whatsapp}}",
-              "monto": "={{$json.monto}}",
-              "metodo_pago": "={{$json.metodo_pago}}",
-              "fecha_pago": "={{$json.fecha_pago}}",
-              "estado_pago": "={{$json.estado_pago}}",
-              "validado_por": "={{$json.validado_por}}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "pago_id",
-                "displayName": "pago_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "cliente_id",
-                "displayName": "cliente_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "whatsapp",
-                "displayName": "whatsapp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "monto",
-                "displayName": "monto",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "metodo_pago",
-                "displayName": "metodo_pago",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "fecha_pago",
-                "displayName": "fecha_pago",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "estado_pago",
-                "displayName": "estado_pago",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "validado_por",
-                "displayName": "validado_por",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "05fd74cf-5d96-40a8-a36e-c09094465a8c",
-        "name": "Crear pago pendiente",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          4144,
-          464
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "={{$env.WHATSAPP_API_URL}}",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {}
-            ]
-          },
-          "options": {
-            "timeout": 10000
-          }
-        },
-        "id": "a7c283e5-414e-4720-8dc7-6ea8ac790f63",
-        "name": "Avisar owner",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4,
-        "position": [
-          4368,
-          464
-        ],
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "={{$env.WHATSAPP_API_URL}}",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {}
-            ]
-          },
-          "options": {
-            "timeout": 10000
-          }
-        },
-        "id": "9b1cb981-2085-44c7-970d-f0062ee10a89",
-        "name": "Avisar cliente pending",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4,
-        "position": [
-          4592,
-          464
-        ],
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "={{$env.WHATSAPP_API_URL}}",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {}
-            ]
-          },
-          "options": {
-            "timeout": 10000
-          }
-        },
-        "id": "eaef522e-854f-4684-b957-9c1a797099f7",
-        "name": "Pedir datos",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4,
-        "position": [
-          3920,
-          624
-        ],
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "={{$env.WHATSAPP_API_URL}}",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {}
-            ]
-          },
-          "options": {
-            "timeout": 10000
-          }
-        },
-        "id": "240e88a0-1f98-4d40-8343-b8bdede322fb",
-        "name": "Enviar respuesta IA",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4,
-        "position": [
-          2640,
-          720
-        ],
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "jsCode": "return [{\n  json: {\n    cliente_id: $json.cliente?.cliente_id || '',\n    ultimo_contacto: new Date().toISOString()\n  }\n}];"
-        },
-        "id": "9523db3e-ffc2-46f5-94be-641e4257af35",
-        "name": "Payload ultimo_contacto limpio",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          2752,
-          720
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "update",
-          "documentId": {
-            "__rl": true,
-            "value": "18xZp5Spwm8i1RCtk6R9pHvt8cNJJzwK_1FSqHcaivTo",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Clientes",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "cliente_id": "={{$json.cliente_id}}",
-              "whatsapp": "={{$json.whatsapp}}",
-              "nombre": "={{$json.nombre}}",
-              "estado": "={{$json.estado}}",
-              "fecha_registro": "={{$json.fecha_registro}}",
-              "ultimo_contacto": "={{$json.ultimo_contacto}}",
-              "saldo": "={{$json.saldo}}",
-              "notas": "={{$json.notas}}"
-            },
-            "matchingColumns": [
-              "cliente_id"
-            ],
-            "schema": [
-              {
-                "id": "cliente_id",
-                "displayName": "cliente_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "whatsapp",
-                "displayName": "whatsapp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "nombre",
-                "displayName": "nombre",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "estado",
-                "displayName": "estado",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "fecha_registro",
-                "displayName": "fecha_registro",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "ultimo_contacto",
-                "displayName": "ultimo_contacto",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "saldo",
-                "displayName": "saldo",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "notas",
-                "displayName": "notas",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "cf3e8069-e8a1-4fe4-a8a4-398df8f533eb",
-        "name": "Actualizar ultimo_contacto",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          2864,
-          720
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "operation": "update",
-          "documentId": {
-            "__rl": true,
-            "value": "1iA9HQvTWwGSiVUteSq9ZspoLYwiRqMID_hP_yXVejsg",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "inbox_buffer",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "message_id": "={{$json.message_id}}",
-              "status": "={{$json.status}}",
-              "batch_id": "={{$json.batch_id}}"
-            },
-            "matchingColumns": [
-              "message_id"
-            ],
-            "schema": [
-              {
-                "id": "timestamp",
-                "displayName": "timestamp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "whatsapp",
-                "displayName": "whatsapp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "message_id",
-                "displayName": "message_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "message_type",
-                "displayName": "message_type",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "text",
-                "displayName": "text",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "media_id",
-                "displayName": "media_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "media_mime",
-                "displayName": "media_mime",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "status",
-                "displayName": "status",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "batch_id",
-                "displayName": "batch_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "abebaa10-1b5d-4ebd-b884-91931ecb4bb5",
-        "name": "Marcar buffer DONE (cliente)",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          3088,
-          720
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "values": {
-            "string": [
-              {
-                "name": "message_id",
-                "value": "={{$json.message_id}}"
-              },
-              {
-                "name": "status",
-                "value": "={{$json.status}}"
-              },
-              {
-                "name": "batch_id",
-                "value": "={{$json.batch_id}}"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "42e66374-87e9-47f8-a362-dfc78921fc70",
-        "name": "Filtrar DONE (cliente)",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 2,
-        "position": [
-          3040,
-          720
-        ]
-      },
-      {
-        "parameters": {
-          "triggerTimes": {
-            "item": [
-              {
-                "hour": 9
-              }
-            ]
-          }
-        },
-        "id": "9b7de312-c403-41ef-9102-966992e6518a",
-        "name": "Cron Recordatorios",
-        "type": "n8n-nodes-base.cron",
-        "typeVersion": 1,
-        "position": [
-          0,
-          848
-        ]
-      },
-      {
-        "parameters": {
-          "documentId": {
-            "__rl": true,
-            "value": "18xZp5Spwm8i1RCtk6R9pHvt8cNJJzwK_1FSqHcaivTo",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Clientes",
-            "mode": "list"
-          },
-          "options": {}
-        },
-        "id": "f575fa2d-ea68-4e37-812c-c2ebd3666e63",
-        "name": "Read clientes (recordatorios)",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          224,
-          848
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "documentId": {
-            "__rl": true,
-            "value": "1JQ3e5K4qBX4GMZBCmtDo_SPmWCvmDzSdXLAfC5HR28Y",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Recordatorios",
-            "mode": "list"
-          },
-          "options": {}
-        },
-        "id": "5ea98408-5129-46fd-bba6-da6aef8fb462",
-        "name": "Read logs (recordatorios)",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          448,
-          848
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "const clientes = $items('Read clientes (recordatorios)').map(i => i.json);\nconst logs = $items('Read logs (recordatorios)').map(i => i.json);\nconst now = new Date();\n\nconst types = [\n  { name: 'RECORDATORIO_7D', diff: 7 },\n  { name: 'RECORDATORIO_2D', diff: 2 },\n  { name: 'VENCE_HOY', diff: 0 },\n  { name: 'SEGUIMIENTO_3D', diff: -3 },\n  { name: 'SEGUIMIENTO_7D', diff: -7 },\n  { name: 'MOROSO_14D', diff: -14 }\n];\n\nconst out = [];\nfor (const c of clientes) {\n  if (c.estado !== 'ACTIVO' || c.consentimiento_mensajes !== 'SI') continue;\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  if (!venc) continue;\n  const diffDays = Math.floor((venc - now) / (1000 * 60 * 60 * 24));\n  const match = types.find(t => diffDays === t.diff);\n  if (!match) continue;\n\n  const recordatorioId = `${c.cliente_id}_${match.name}_${c.proximo_vencimiento}`;\n  const already = logs.find(l => l.recordatorio_id === recordatorioId);\n  if (already) continue;\n\n  out.push({\n    json: {\n      cliente: c,\n      tipo_mensaje: match.name,\n      recordatorio_id: recordatorioId,\n      texto: `Hola ${c.nombre}, recordatorio: tu pago vence el ${c.proximo_vencimiento}. Si ya pagaste, ignora este mensaje.`\n    }\n  });\n}\n\nreturn out;"
-        },
-        "id": "ba6fb54c-caa3-4cfc-b13e-d9aabf92db04",
-        "name": "Construir recordatorios",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          672,
-          848
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "={{$env.WHATSAPP_API_URL}}",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {}
-            ]
-          },
-          "options": {
-            "timeout": 10000
-          }
-        },
-        "id": "e872c17b-baa7-41ef-bf73-00c84ba484ce",
-        "name": "Enviar recordatorio",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4,
-        "position": [
-          880,
-          848
-        ],
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "jsCode": "return [{\n  json: {\n    recordatorio_id: $json.recordatorio_id || '',\n    cliente_id: $json.cliente && $json.cliente.cliente_id ? $json.cliente.cliente_id : '',\n    whatsapp: $json.cliente && $json.cliente.whatsapp ? $json.cliente.whatsapp : '',\n    mensaje: $json.texto || '',\n    fecha_envio: new Date().toISOString(),\n    enviado: 'SI'\n  }\n}];"
-        },
-        "id": "94d7a9af-4aba-4e22-961e-f35af8b248b9",
-        "name": "Preparar log recordatorio",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1104,
-          928
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "append",
-          "documentId": {
-            "__rl": true,
-            "value": "1JQ3e5K4qBX4GMZBCmtDo_SPmWCvmDzSdXLAfC5HR28Y",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Recordatorios",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "recordatorio_id": "={{$json.recordatorio_id}}",
-              "cliente_id": "={{$json.cliente_id}}",
-              "whatsapp": "={{$json.whatsapp}}",
-              "mensaje": "={{$json.mensaje}}",
-              "fecha_envio": "={{$json.fecha_envio}}",
-              "enviado": "={{$json.enviado}}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "recordatorio_id",
-                "displayName": "recordatorio_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "cliente_id",
-                "displayName": "cliente_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "whatsapp",
-                "displayName": "whatsapp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "mensaje",
-                "displayName": "mensaje",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "fecha_envio",
-                "displayName": "fecha_envio",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "enviado",
-                "displayName": "enviado",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "490628b6-c4f7-4ef0-b2a2-0a7fcbc701a2",
-        "name": "Log recordatorio",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          1104,
-          848
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "triggerTimes": {
-            "item": [
-              {
-                "hour": 7
-              },
-              {
-                "mode": "everyWeek",
-                "hour": 8
-              }
-            ]
-          }
-        },
-        "id": "ed557ff7-721c-43f8-8dc6-b8bad6fc49b7",
-        "name": "Cron Reportes",
-        "type": "n8n-nodes-base.cron",
-        "typeVersion": 1,
-        "position": [
-          0,
-          1088
-        ]
-      },
-      {
-        "parameters": {
-          "documentId": {
-            "__rl": true,
-            "value": "18xZp5Spwm8i1RCtk6R9pHvt8cNJJzwK_1FSqHcaivTo",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Clientes",
-            "mode": "list"
-          },
-          "options": {}
-        },
-        "id": "f9fa3a3e-2c48-45f1-9e8f-bfe45aa035d4",
-        "name": "Read clientes (reportes)",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          224,
-          1088
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "const clientes = items.map(i => i.json).filter(c => c.estado === 'ACTIVO');\nconst now = new Date();\nlet porVencer = 0;\nlet venceHoy = 0;\nlet vencidos1a7 = 0;\nlet morosos = 0;\nlet montoEsperado = 0;\n\nfor (const c of clientes) {\n  const venc = c.proximo_vencimiento ? new Date(c.proximo_vencimiento) : null;\n  if (!venc) continue;\n  const diff = Math.floor((venc - now) / (1000 * 60 * 60 * 24));\n  if (diff >= 0 && diff <= 2) porVencer += 1;\n  if (diff === 0) venceHoy += 1;\n  if (diff < 0 && diff >= -7) vencidos1a7 += 1;\n  if (diff <= -8) morosos += 1;\n  montoEsperado += Number(c.monto_mensual || 0);\n}\n\nconst texto = `Reporte: Activos ${clientes.length}. Por vencer (0-2): ${porVencer}. Vence hoy: ${venceHoy}. Vencidos 1-7: ${vencidos1a7}. Morosos 8+: ${morosos}. Monto esperado: ${montoEsperado}.`;\nreturn [{\n  json: {\n    texto,\n    fecha: now.toISOString().slice(0, 10),\n    total_clientes: clientes.length,\n    total_pagos: 0,\n    monto_total: montoEsperado,\n    mensajes_recibidos: 0,\n    observaciones: texto\n  }\n}];"
-        },
-        "id": "3486f34a-9950-4b59-9690-f755ac0f12ea",
-        "name": "Construir reporte",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          448,
-          1088
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "={{$env.WHATSAPP_API_URL}}",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {}
-            ]
-          },
-          "options": {
-            "timeout": 10000
-          }
-        },
-        "id": "b551eb0c-dc1d-47ea-971e-e7e00d132f8c",
-        "name": "Enviar reporte",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4,
-        "position": [
-          672,
-          1088
-        ],
-        "continueOnFail": true
-      },
-      {
-        "parameters": {
-          "jsCode": "return [{\n  json: {\n    fecha: $json.fecha || new Date().toISOString().slice(0, 10),\n    total_clientes: $json.total_clientes || 0,\n    total_pagos: $json.total_pagos || 0,\n    monto_total: $json.monto_total || 0,\n    mensajes_recibidos: $json.mensajes_recibidos || 0,\n    observaciones: $json.observaciones || $json.texto || ''\n  }\n}];"
-        },
-        "id": "9ebe9e09-3285-45f3-947f-40c706cff045",
-        "name": "Preparar log reporte",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          880,
-          1168
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "append",
-          "documentId": {
-            "__rl": true,
-            "value": "1r11WVOlgSTAymxjimDhEUWIONc22cCAanKhn-eqz8QA",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "Reportes",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "fecha": "={{$json.fecha}}",
-              "total_clientes": "={{$json.total_clientes}}",
-              "total_pagos": "={{$json.total_pagos}}",
-              "monto_total": "={{$json.monto_total}}",
-              "mensajes_recibidos": "={{$json.mensajes_recibidos}}",
-              "observaciones": "={{$json.observaciones}}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "fecha",
-                "displayName": "fecha",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "total_clientes",
-                "displayName": "total_clientes",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "total_pagos",
-                "displayName": "total_pagos",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "monto_total",
-                "displayName": "monto_total",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "mensajes_recibidos",
-                "displayName": "mensajes_recibidos",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "observaciones",
-                "displayName": "observaciones",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "6719d10b-682a-40ea-90cd-1ade444d9b95",
-        "name": "Log reporte",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          880,
-          1088
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
-        },
-        "id": "7032bf9c-0990-44da-98f5-c056b3f2f502",
-        "name": "Preparar buffer DONE (admin)",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          2480,
-          368
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
-        },
-        "id": "cfba80f2-992f-49c1-91a1-3fd2156ca772",
-        "name": "Preparar buffer DONE (nuevo)",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          2128,
-          432
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "const messageIds = Array.isArray($json.pending_message_ids) ? [...$json.pending_message_ids] : [];\nif (!messageIds.length && $json.pending_message_ids) {\n  messageIds.push($json.pending_message_ids);\n}\n\nreturn messageIds.map(messageId => ({ json: { message_id: messageId, status: 'DONE', batch_id: $json.batch_id || '' } }));"
-        },
-        "id": "230e3994-eff7-4f43-8850-000598cfc7fe",
-        "name": "Preparar buffer DONE (cliente)",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          2960,
-          720
-        ]
-      },
-      {
-        "parameters": {
-          "dataType": "string",
-          "value1": "={{$json.update && $json.update.sheet ? $json.update.sheet : ''}}"
-        },
-        "id": "3573f64d-dd14-45bb-87ca-2c266db77c7a",
-        "name": "Switch update.sheet",
-        "type": "n8n-nodes-base.switch",
-        "typeVersion": 2,
-        "position": [
-          1744,
-          288
-        ]
-      },
-      {
-        "parameters": {
-          "jsCode": "return [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: $json.whatsapp || '',\n    mensaje_usuario: $json.user_input || $json.combined_text || '',\n    respuesta_ia: $json.ai_reply || '',\n    contexto: $json.context_json || ''\n  }\n}];"
-        },
-        "id": "c4167342-568f-45dd-87aa-3bae4e840ac2",
-        "name": "Preparar log respuesta IA",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          2640,
-          848
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "append",
-          "documentId": {
-            "__rl": true,
-            "value": "1mjE-GZk_bxGMoSiipXEzYyNHMTmnLFQwC4i3_RsTLb4",
-            "mode": "list"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": "respuestas_ia",
-            "mode": "list"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "timestamp": "={{$json.timestamp}}",
-              "whatsapp": "={{$json.whatsapp}}",
-              "mensaje_usuario": "={{$json.mensaje_usuario}}",
-              "respuesta_ia": "={{$json.respuesta_ia}}",
-              "contexto": "={{$json.contexto}}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "timestamp",
-                "displayName": "timestamp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "whatsapp",
-                "displayName": "whatsapp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "mensaje_usuario",
-                "displayName": "mensaje_usuario",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "respuesta_ia",
-                "displayName": "respuesta_ia",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "contexto",
-                "displayName": "contexto",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
-          "options": {}
-        },
-        "id": "7b695880-c0cd-480c-be20-69a10128897e",
-        "name": "Log respuesta IA",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          2864,
-          848
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "ibyjaAr0Anzj6zY9",
-            "name": "Google Sheets account"
-          }
-        }
-      }
-    ],
-    "connections": {
-      "Webhook In": {
-        "main": [
-          [
-            {
-              "node": "Normalizar y validar",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Normalizar y validar": {
-        "main": [
-          [
-            {
-              "node": "IF Secret válido",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "IF Secret válido": {
-        "main": [
-          [
-            {
-              "node": "Preparar buffer",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Respond OK (invalid)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Preparar buffer": {
-        "main": [
-          [
-            {
-              "node": "Append inbox_buffer",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Append inbox_buffer": {
-        "main": [
-          [
-            {
-              "node": "Respond OK",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Cron Procesador": {
-        "main": [
-          [
-            {
-              "node": "Read inbox_buffer",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Read inbox_buffer": {
-        "main": [
-          [
-            {
-              "node": "Agrupar y debounce",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Agrupar y debounce": {
-        "main": [
-          [
-            {
-              "node": "IF Owner",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "IF Owner": {
-        "main": [
-          [
-            {
-              "node": "Parse comando admin",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Read clientes",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Parse comando admin": {
-        "main": [
-          [
-            {
-              "node": "Read clientes (admin)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Read clientes (admin)": {
-        "main": [
-          [
-            {
-              "node": "Read pagos (admin)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Read pagos (admin)": {
-        "main": [
-          [
-            {
-              "node": "Preparar acción admin",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Preparar acción admin": {
-        "main": [
-          [
-            {
-              "node": "Aplanar update.data",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Aplanar update.data": {
-        "main": [
-          [
-            {
-              "node": "Switch update.sheet",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Enviar WhatsApp owner": {
-        "main": [
-          [
-            {
-              "node": "Preparar log admin",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Preparar log admin": {
-        "main": [
-          [
-            {
-              "node": "Log admin",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Log admin": {
-        "main": [
-          [
-            {
-              "node": "Preparar buffer DONE (admin)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Read clientes": {
-        "main": [
-          [
-            {
-              "node": "Buscar cliente",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Buscar cliente": {
-        "main": [
-          [
-            {
-              "node": "IF Cliente existe",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "IF Cliente existe": {
-        "main": [
-          [
-            {
-              "node": "Read mensajes_log",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Enviar alta cliente",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Enviar alta cliente": {
-        "main": [
-          [
-            {
-              "node": "Preparar log nuevo",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Preparar log nuevo": {
-        "main": [
-          [
-            {
-              "node": "Log nuevo cliente",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Log nuevo cliente": {
-        "main": [
-          [
-            {
-              "node": "Preparar buffer DONE (nuevo)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Read mensajes_log": {
-        "main": [
-          [
-            {
-              "node": "Construir contexto",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Construir contexto": {
-        "main": [
-          [
-            {
-              "node": "OpenAI Texto",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "OpenAI Texto": {
-        "main": [
-          [
-            {
-              "node": "Extraer respuesta IA",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Extraer respuesta IA": {
-        "main": [
-          [
-            {
-              "node": "IF Tiene imagen",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "IF Tiene imagen": {
-        "main": [
-          [
-            {
-              "node": "Get media url",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Enviar respuesta IA",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get media url": {
-        "main": [
-          [
-            {
-              "node": "Download media",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Download media": {
-        "main": [
-          [
-            {
-              "node": "Preparar imagen",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Preparar imagen": {
-        "main": [
-          [
-            {
-              "node": "OpenAI Vision",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "OpenAI Vision": {
-        "main": [
-          [
-            {
-              "node": "Validar comprobante",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Validar comprobante": {
-        "main": [
-          [
-            {
-              "node": "IF Visión OK",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "IF Visión OK": {
-        "main": [
-          [
-            {
-              "node": "Preparar pago",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Pedir datos",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Preparar pago": {
-        "main": [
-          [
-            {
-              "node": "Crear pago pendiente",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Crear pago pendiente": {
-        "main": [
-          [
-            {
-              "node": "Avisar owner",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Avisar owner": {
-        "main": [
-          [
-            {
-              "node": "Avisar cliente pending",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Enviar respuesta IA": {
-        "main": [
-          [
-            {
-              "node": "Preparar log respuesta IA",
-              "type": "main",
-              "index": 0
-            },
-            {
-              "node": "Payload ultimo_contacto limpio",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Payload ultimo_contacto limpio": {
-        "main": [
-          [
-            {
-              "node": "Actualizar ultimo_contacto",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Actualizar ultimo_contacto": {
-        "main": [
-          [
-            {
-              "node": "Preparar buffer DONE (cliente)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Cron Recordatorios": {
-        "main": [
-          [
-            {
-              "node": "Read clientes (recordatorios)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Read clientes (recordatorios)": {
-        "main": [
-          [
-            {
-              "node": "Read logs (recordatorios)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Read logs (recordatorios)": {
-        "main": [
-          [
-            {
-              "node": "Construir recordatorios",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Construir recordatorios": {
-        "main": [
-          [
-            {
-              "node": "Enviar recordatorio",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Enviar recordatorio": {
-        "main": [
-          [
-            {
-              "node": "Preparar log recordatorio",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Preparar log recordatorio": {
-        "main": [
-          [
-            {
-              "node": "Log recordatorio",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Cron Reportes": {
-        "main": [
-          [
-            {
-              "node": "Read clientes (reportes)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Read clientes (reportes)": {
-        "main": [
-          [
-            {
-              "node": "Construir reporte",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Construir reporte": {
-        "main": [
-          [
-            {
-              "node": "Enviar reporte",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Enviar reporte": {
-        "main": [
-          [
-            {
-              "node": "Preparar log reporte",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Preparar log reporte": {
-        "main": [
-          [
-            {
-              "node": "Log reporte",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Preparar buffer DONE (admin)": {
-        "main": [
-          [
-            {
-              "node": "Filtrar DONE (admin)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Filtrar DONE (admin)": {
-        "main": [
-          [
-            {
-              "node": "Marcar buffer DONE (admin)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Preparar buffer DONE (nuevo)": {
-        "main": [
-          [
-            {
-              "node": "Filtrar DONE (nuevo)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Filtrar DONE (nuevo)": {
-        "main": [
-          [
-            {
-              "node": "Marcar buffer DONE (nuevo)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Preparar buffer DONE (cliente)": {
-        "main": [
-          [
-            {
-              "node": "Filtrar DONE (cliente)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Filtrar DONE (cliente)": {
-        "main": [
-          [
-            {
-              "node": "Marcar buffer DONE (cliente)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Update cliente": {
-        "main": [
-          [
-            {
-              "node": "Enviar WhatsApp owner",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Update pago": {
-        "main": [
-          [
-            {
-              "node": "Enviar WhatsApp owner",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Preparar log respuesta IA": {
-        "main": [
-          [
-            {
-              "node": "Log respuesta IA",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      }
-    },
-    "authors": "Jair Tarrillo",
-    "name": "Version 166a92c4",
-    "description": "",
-    "autosaved": true,
-    "workflowPublishHistory": [
-      {
-        "createdAt": "2026-02-07T06:00:27.227Z",
-        "id": 2,
-        "workflowId": "__2cWlvvhExh0VkwuWIg_",
-        "versionId": "166a92c4-9650-4518-98c8-a3152cb8840b",
-        "event": "activated",
-        "userId": "3748f10f-b280-4605-9ad5-89b0badf5f8f"
-      }
-    ]
+  "versionId": "af56d7e5-5cd8-4299-8016-bb83928c8abf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "437eaedb457c8fcbb6da94c597f8ad77b927aa083445e4a31402725053a3292f"
   },
-  "scopes": [
-    "workflow:create",
-    "workflow:delete",
-    "workflow:execute",
-    "workflow:execute-chat",
-    "workflow:list",
-    "workflow:move",
-    "workflow:publish",
-    "workflow:read",
-    "workflow:share",
-    "workflow:update"
-  ],
-  "checksum": "820b72b52f6e55262bc3c1021d230d2aa122bbe17786b15d5da4e8c2a8855afc"
+  "id": "mNukjhK8HpLp88G7OMRHq",
+  "tags": []
 }
