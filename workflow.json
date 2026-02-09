@@ -22,7 +22,8 @@
       "parameters": {
         "path": "whatsapp-in-verify",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {},
+        "httpMethod": "GET"
       },
       "id": "084b3b1c-32d3-47d6-b83f-0c48ed7f0dc1",
       "name": "Webhook In (verify)",
@@ -36,52 +37,24 @@
     },
     {
       "parameters": {
-        "jsCode": "const query = $json.query ?? $query ?? {};\nconst mode = query['hub.mode'];\nconst token = query['hub.verify_token'];\nconst challenge = query['hub.challenge'];\n\nconst isVerifyRequest = !!(mode && token && challenge);\nconst isVerifyValid =\n  isVerifyRequest &&\n  mode === 'subscribe' &&\n  token === $env.WHATSAPP_VERIFY_TOKEN;\n\nreturn [\n  {\n    json: {\n      ...$json,\n      verify: {\n        is_request: isVerifyRequest,\n        is_valid: isVerifyValid,\n        challenge: String(challenge ?? ''),\n      },\n    },\n  },\n];"
-      },
-      "id": "a6313cfd-f05f-4eb7-bbdd-39e5e9c8644b",
-      "name": "Verificar webhook (GET)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -528,
-        224
-      ]
-    },
-    {
-      "parameters": {
         "conditions": {
-          "boolean": [
+          "string": [
             {
-              "value1": "={{$json.verify.is_request}}",
-              "value2": true
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "dc21aaba-00c4-46d6-bc2b-8143565a4b66",
-      "name": "IF Es verificación",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        -192,
-        224
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "boolean": [
+              "value1": "={{$json.query[\"hub.mode\"]}}",
+              "operation": "equals",
+              "value2": "subscribe"
+            },
             {
-              "value1": "={{$json.verify.is_valid}}",
-              "value2": true
+              "value1": "={{$json.query[\"hub.verify_token\"]}}",
+              "operation": "equals",
+              "value2": "mi_token_whatsapp_2026"
             }
           ]
         },
         "options": {}
       },
       "id": "b1dc03db-7b19-48f5-8335-ec06c968d974",
-      "name": "IF Token válido (verify)",
+      "name": "IF verify ok",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
@@ -92,7 +65,7 @@
     {
       "parameters": {
         "respondWith": "text",
-        "responseBody": "={{$json.verify.challenge}}",
+        "responseBody": "={{$json.query[\"hub.challenge\"]}}",
         "options": {
           "responseCode": 200,
           "responseHeaders": {
@@ -117,7 +90,7 @@
     {
       "parameters": {
         "respondWith": "text",
-        "responseBody": "Invalid verify token",
+        "responseBody": "Forbidden",
         "options": {
           "responseCode": 403,
           "responseHeaders": {
@@ -131,7 +104,7 @@
         }
       },
       "id": "1b6eb140-66f2-4fc1-9d6e-ae98b53ddfbd",
-      "name": "Respond verify invalid",
+      "name": "Respond verify INVALID",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
@@ -354,32 +327,6 @@
           "name": "Google Sheets account"
         }
       }
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "id": "c2542b78-8fdd-4447-bae1-8f114c30ec1d",
-      "name": "Respond OK",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        656,
-        224
-      ]
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "id": "52845d65-4afc-4f39-9343-8700d7cc1a29",
-      "name": "Respond OK (invalid)",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        144,
-        384
-      ]
     },
     {
       "parameters": {
@@ -2762,6 +2709,31 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "OK",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain"
+              }
+            ]
+          }
+        }
+      },
+      "id": "9e8b0c1b-9b2d-4a1d-9c14-1ccf7bb6b2b1",
+      "name": "Respond 200 ASAP",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -552,
+        224
+      ]
     }
   ],
   "pinData": {},
@@ -2770,7 +2742,7 @@
       "main": [
         [
           {
-            "node": "Normalizar y validar",
+            "node": "Respond 200 ASAP",
             "type": "main",
             "index": 0
           }
@@ -2797,13 +2769,7 @@
             "index": 0
           }
         ],
-        [
-          {
-            "node": "Respond OK (invalid)",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Preparar buffer": {
@@ -2819,13 +2785,7 @@
     },
     "Append inbox_buffer": {
       "main": [
-        [
-          {
-            "node": "Respond OK",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Cron Procesador": {
@@ -3466,29 +3426,29 @@
         ]
       ]
     },
-    "Verificar webhook (GET)": {
+    "Webhook In (verify)": {
       "main": [
         [
           {
-            "node": "IF Es verificación",
+            "node": "IF verify ok",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "IF Es verificación": {
+    "Respond 200 ASAP": {
       "main": [
         [
           {
-            "node": "IF Token válido (verify)",
+            "node": "Normalizar y validar",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "IF Token válido (verify)": {
+    "IF verify ok": {
       "main": [
         [
           {
@@ -3499,18 +3459,7 @@
         ],
         [
           {
-            "node": "Respond verify invalid",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Webhook In (verify)": {
-      "main": [
-        [
-          {
-            "node": "Verificar webhook (GET)",
+            "node": "Respond verify INVALID",
             "type": "main",
             "index": 0
           }
