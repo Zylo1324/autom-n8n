@@ -3,20 +3,37 @@
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "ALL",
-        "path": "whatsapp-in",
+        "httpMethod": "GET",
+        "path": "whatsapp-in-verify",
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "f37b6af4-1671-4679-a8cb-d0f3b0029d63",
-      "name": "Webhook In",
+      "id": "b55c9501-2a9a-47eb-8c6d-c1a94cb65d99",
+      "name": "Webhook Verify",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1008,
+        112
+      ],
+      "webhookId": "c18f0e3a-1d49-43a4-9b49-6a099b7b4871"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-in-events",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "5e9c9d43-0d3d-4690-a809-2c54f76e0af5",
+      "name": "Webhook Events",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
         -1008,
         304
       ],
-      "webhookId": "f80acfa6-40ba-405e-92c0-2eae4f97dc35"
+      "webhookId": "55f8c857-1b67-4b34-97c0-b489df4bf7ba"
     },
     {
       "parameters": {
@@ -2725,43 +2742,10 @@
         -816,
         304
       ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "string": [
-            {
-              "value1": "={{$json.method}}",
-              "operation": "equals",
-              "value2": "GET"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "0c5a2b0f-1c6e-4e7c-8a4d-7b99a2c0b8f2",
-      "name": "IF Method GET",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        -784,
-        128
-      ]
     }
   ],
   "pinData": {},
   "connections": {
-    "Webhook In": {
-      "main": [
-        [
-          {
-            "node": "IF Method GET",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Normalizar y validar": {
       "main": [
         [
@@ -3462,7 +3446,7 @@
         ]
       ]
     },
-    "IF Method GET": {
+    "Webhook Verify": {
       "main": [
         [
           {
@@ -3470,7 +3454,11 @@
             "type": "main",
             "index": 0
           }
-        ],
+        ]
+      ]
+    },
+    "Webhook Events": {
+      "main": [
         [
           {
             "node": "Respond 200 ASAP",
