@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
+        "httpMethod": "ALL",
         "path": "whatsapp-in",
         "responseMode": "responseNode",
         "options": {}
@@ -20,22 +20,6 @@
     },
     {
       "parameters": {
-        "path": "whatsapp-in-verify",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "id": "48af6d1e-969a-4877-93ec-37d5560c8a8e",
-      "name": "Webhook In (verify)",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [
-        -1008,
-        128
-      ],
-      "webhookId": "c2c6d0c1-0d5e-45b4-8c5b-7e4d9b5e2f6a"
-    },
-    {
-      "parameters": {
         "conditions": {
           "string": [
             {
@@ -46,7 +30,7 @@
             {
               "value1": "={{$json.query[\"hub.verify_token\"]}}",
               "operation": "equals",
-              "value2": "mi_token_whatsapp_2026"
+              "value2": "zylo_verify_token"
             }
           ]
         },
@@ -113,7 +97,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $json;\nconst headers = $headers ?? data.headers ?? {};\nconst query = data.query ?? {};\nconst payload = data.body ?? data;\nconst secret = headers['x-origin-secret'] || headers['X-Origin-Secret'] || query.secret;\nconst validSecret = secret === $env.ORIGIN_SECRET;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0] ?? {};\n\nconst from = message.from ?? '';\nconst messageId = message.id ?? '';\nconst timestamp = message.timestamp ? new Date(parseInt(message.timestamp, 10) * 1000).toISOString() : new Date().toISOString();\nconst type = message.type || 'text';\n\nlet text = '';\nlet mediaId = '';\nlet mediaMime = '';\n\nif (type === 'text') {\n  text = message.text?.body || '';\n} else if (type === 'image') {\n  mediaId = message.image?.id || '';\n  mediaMime = message.image?.mime_type || '';\n  text = message.image?.caption || '';\n} else if (type === 'document') {\n  mediaId = message.document?.id || '';\n  mediaMime = message.document?.mime_type || '';\n  text = message.document?.caption || '';\n}\n\nconst normalizePhone = (raw) => {\n  const digits = (raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    valid_secret: !!validSecret,\n    timestamp,\n    whatsapp: normalizePhone(from),\n    message_id: messageId,\n    message_type: mediaId ? 'media' : 'text',\n    text: text || '',\n    media_id: mediaId || '',\n    media_mime: mediaMime || ''\n  }\n}];"
+        "jsCode": "const data = $json;\nconst headers = $headers ?? data.headers ?? {};\nconst query = data.query ?? {};\nconst payload = data.body ?? data;\n\nconst strictSecretCheck = String($env.STRICT_SECRET_CHECK || 'false').toLowerCase() === 'true';\nconst originSecret = headers['x-origin-secret'] || headers['X-Origin-Secret'] || query.secret;\nconst originSecretValid = originSecret && $env.ORIGIN_SECRET\n  ? originSecret === $env.ORIGIN_SECRET\n  : false;\n\nconst signatureHeader = headers['x-hub-signature-256'] || headers['X-Hub-Signature-256'];\nconst appSecret = $env.APP_SECRET || '';\nconst rawBody = data.rawBody || data.body || '';\nlet signatureValid = false;\n\nif (signatureHeader && appSecret && rawBody) {\n  const crypto = require('crypto');\n  const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(\n    typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody)\n  ).digest('hex')}`;\n  signatureValid = signatureHeader === expected;\n}\n\nconst validSecret = signatureValid || originSecretValid || !strictSecretCheck;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0] ?? {};\n\nconst from = message.from ?? '';\nconst messageId = message.id ?? '';\nconst timestamp = message.timestamp ? new Date(parseInt(message.timestamp, 10) * 1000).toISOString() : new Date().toISOString();\nconst type = message.type || 'text';\n\nlet text = '';\nlet mediaId = '';\nlet mediaMime = '';\n\nif (type === 'text') {\n  text = message.text?.body || '';\n} else if (type === 'image') {\n  mediaId = message.image?.id || '';\n  mediaMime = message.image?.mime_type || '';\n  text = message.image?.caption || '';\n} else if (type === 'document') {\n  mediaId = message.document?.id || '';\n  mediaMime = message.document?.mime_type || '';\n  text = message.document?.caption || '';\n}\n\nconst normalizePhone = (raw) => {\n  const digits = (raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    valid_secret: !!validSecret,\n    signature_valid: !!signatureValid,\n    origin_secret_valid: !!originSecretValid,\n    timestamp,\n    whatsapp: normalizePhone(from),\n    message_id: messageId,\n    message_type: mediaId ? 'media' : 'text',\n    text: text || '',\n    media_id: mediaId || '',\n    media_mime: mediaMime || ''\n  }\n}];"
       },
       "id": "eb1ae51f-8db7-4117-92e0-65b1f7f0231f",
       "name": "Normalizar y validar",
@@ -137,7 +121,7 @@
         "options": {}
       },
       "id": "391f089e-646d-45f7-94c6-8baddeaa5384",
-      "name": "IF Secret válido",
+      "name": "IF Secret v\u00e1lido",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
@@ -489,10 +473,10 @@
     },
     {
       "parameters": {
-        "jsCode": "const clientes = $items('Read clientes (admin)').map(i => i.json);\nconst pagos = $items('Read pagos (admin)').map(i => i.json);\nconst { action, args } = $json;\nlet response = 'Comando no reconocido.';\nlet update = null;\n\nconst findClienteById = (id) => clientes.find(c => c.cliente_id === id);\nconst findPagoById = (id) => pagos.find(p => p.pago_id === id);\n\nif (action === 'BUSCAR_CLIENTE') {\n  const q = (args[0] || '').toLowerCase();\n  const matches = clientes.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.whatsapp || '').includes(q));\n  response = matches.length ? matches.map(c => `${c.cliente_id} | ${c.nombre} | ${c.whatsapp} | ${c.estado}`).join('\n') : 'Sin resultados.';\n}\n\nif (action === 'CONFIRMAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado_pago: 'CONFIRMADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} confirmado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'RECHAZAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado_pago: 'RECHAZADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} rechazado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'ACTUALIZAR_LINK') {\n  const [clienteId, url] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && url) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { link_pago: url } };\n    response = `Link actualizado para ${clienteId}.`;\n  } else {\n    response = 'Cliente o URL inválido.';\n  }\n}\n\nif (action === 'SUSPENDER') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'SUSPENDIDO' } };\n    response = `Cliente ${clienteId} suspendido.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'ACTIVAR') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'ACTIVO' } };\n    response = `Cliente ${clienteId} activado.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'SET_VENCIMIENTO') {\n  const [clienteId, fecha] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && fecha) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { proximo_vencimiento: fecha } };\n    response = `Vencimiento actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nif (action === 'SET_MONTO') {\n  const [clienteId, monto] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && monto) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { monto_mensual: monto } };\n    response = `Monto actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inválidos.';\n  }\n}\n\nreturn [{ json: { ...$json, response, update } }];"
+        "jsCode": "const clientes = $items('Read clientes (admin)').map(i => i.json);\nconst pagos = $items('Read pagos (admin)').map(i => i.json);\nconst { action, args } = $json;\nlet response = 'Comando no reconocido.';\nlet update = null;\n\nconst findClienteById = (id) => clientes.find(c => c.cliente_id === id);\nconst findPagoById = (id) => pagos.find(p => p.pago_id === id);\n\nif (action === 'BUSCAR_CLIENTE') {\n  const q = (args[0] || '').toLowerCase();\n  const matches = clientes.filter(c => (c.nombre || '').toLowerCase().includes(q) || (c.whatsapp || '').includes(q));\n  response = matches.length ? matches.map(c => `${c.cliente_id} | ${c.nombre} | ${c.whatsapp} | ${c.estado}`).join('\n') : 'Sin resultados.';\n}\n\nif (action === 'CONFIRMAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado_pago: 'CONFIRMADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} confirmado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'RECHAZAR_PAGO') {\n  const pago = findPagoById(args[0]);\n  if (pago) {\n    update = { sheet: 'pagos', key: 'pago_id', value: pago.pago_id, data: { estado_pago: 'RECHAZADO', validado_por: 'OWNER' } };\n    response = `Pago ${pago.pago_id} rechazado.`;\n  } else {\n    response = 'Pago no encontrado.';\n  }\n}\n\nif (action === 'ACTUALIZAR_LINK') {\n  const [clienteId, url] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && url) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { link_pago: url } };\n    response = `Link actualizado para ${clienteId}.`;\n  } else {\n    response = 'Cliente o URL inv\u00e1lido.';\n  }\n}\n\nif (action === 'SUSPENDER') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'SUSPENDIDO' } };\n    response = `Cliente ${clienteId} suspendido.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'ACTIVAR') {\n  const clienteId = args[0];\n  const cliente = findClienteById(clienteId);\n  if (cliente) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { estado: 'ACTIVO' } };\n    response = `Cliente ${clienteId} activado.`;\n  } else {\n    response = 'Cliente no encontrado.';\n  }\n}\n\nif (action === 'SET_VENCIMIENTO') {\n  const [clienteId, fecha] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && fecha) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { proximo_vencimiento: fecha } };\n    response = `Vencimiento actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inv\u00e1lidos.';\n  }\n}\n\nif (action === 'SET_MONTO') {\n  const [clienteId, monto] = args;\n  const cliente = findClienteById(clienteId);\n  if (cliente && monto) {\n    update = { sheet: 'clientes', key: 'cliente_id', value: clienteId, data: { monto_mensual: monto } };\n    response = `Monto actualizado para ${clienteId}.`;\n  } else {\n    response = 'Datos inv\u00e1lidos.';\n  }\n}\n\nreturn [{ json: { ...$json, response, update } }];"
       },
       "id": "bc16eff8-d4c4-4c58-a754-a13ebbe84915",
-      "name": "Preparar acción admin",
+      "name": "Preparar acci\u00f3n admin",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -1435,7 +1419,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const cliente = $json.cliente;\nconst logs = $items('Read mensajes_log').map(i => i.json).filter(l => l.whatsapp === $json.whatsapp);\nconst lastLogs = logs.slice(-10);\nconst systemPrompt = 'Eres asistente de cobros y atención. Responde corto, claro, cordial. No inventes pagos. Si falta info, pregunta. No cambies de tema. Mantente en contexto del negocio. Si el usuario envía varios mensajes unidos, respóndelos juntos.';\nconst context = { cliente: cliente || {}, ultimos_mensajes: lastLogs };\nreturn [{ json: { ...$json, system_prompt: systemPrompt, context_json: JSON.stringify(context), user_input: $json.combined_text || '' } }];"
+        "jsCode": "const cliente = $json.cliente;\nconst logs = $items('Read mensajes_log').map(i => i.json).filter(l => l.whatsapp === $json.whatsapp);\nconst lastLogs = logs.slice(-10);\nconst systemPrompt = 'Eres asistente de cobros y atenci\u00f3n. Responde corto, claro, cordial. No inventes pagos. Si falta info, pregunta. No cambies de tema. Mantente en contexto del negocio. Si el usuario env\u00eda varios mensajes unidos, resp\u00f3ndelos juntos.';\nconst context = { cliente: cliente || {}, ultimos_mensajes: lastLogs };\nreturn [{ json: { ...$json, system_prompt: systemPrompt, context_json: JSON.stringify(context), user_input: $json.combined_text || '' } }];"
       },
       "id": "3e58afaf-a44e-478e-9b0f-b7b67f12c0f8",
       "name": "Construir contexto",
@@ -1472,7 +1456,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const fallback = 'Gracias por tu mensaje. ¿Podrías darme más detalles?';\nconst error = $json.error || ($json.response && $json.response.error) || null;\nconst outputText = ($json.output_text || '').trim();\nconst outputs = Array.isArray($json.output) ? $json.output : [];\nconst contentText = outputs\n  .flatMap(o => Array.isArray(o.content) ? o.content : [])\n  .map(c => (c.text || c.output_text || '').trim())\n  .filter(Boolean)\n  .join('\n');\nconst reply = (outputText || contentText || fallback).trim();\nconst openaiFailed = !!error || (!outputText && !contentText);\nconst errorMessage = error ? (error.message || JSON.stringify(error)) : (openaiFailed ? 'OpenAI response missing output_text/output.' : '');\nreturn [{ json: { ...$json, ai_reply: reply, openai_failed: openaiFailed, openai_error: errorMessage } }];"
+        "jsCode": "const fallback = 'Gracias por tu mensaje. \u00bfPodr\u00edas darme m\u00e1s detalles?';\nconst error = $json.error || ($json.response && $json.response.error) || null;\nconst outputText = ($json.output_text || '').trim();\nconst outputs = Array.isArray($json.output) ? $json.output : [];\nconst contentText = outputs\n  .flatMap(o => Array.isArray(o.content) ? o.content : [])\n  .map(c => (c.text || c.output_text || '').trim())\n  .filter(Boolean)\n  .join('\n');\nconst reply = (outputText || contentText || fallback).trim();\nconst openaiFailed = !!error || (!outputText && !contentText);\nconst errorMessage = error ? (error.message || JSON.stringify(error)) : (openaiFailed ? 'OpenAI response missing output_text/output.' : '');\nreturn [{ json: { ...$json, ai_reply: reply, openai_failed: openaiFailed, openai_error: errorMessage } }];"
       },
       "id": "cd6c3bd9-acb4-40ed-a89d-991e3c811dd7",
       "name": "Extraer respuesta IA",
@@ -1601,7 +1585,7 @@
         "options": {}
       },
       "id": "7d362487-696a-449f-9869-8c4d66e77f8e",
-      "name": "IF Visión OK",
+      "name": "IF Visi\u00f3n OK",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
@@ -2741,6 +2725,28 @@
         -816,
         304
       ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.method}}",
+              "operation": "equals",
+              "value2": "GET"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0c5a2b0f-1c6e-4e7c-8a4d-7b99a2c0b8f2",
+      "name": "IF Method GET",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -784,
+        128
+      ]
     }
   ],
   "pinData": {},
@@ -2749,7 +2755,7 @@
       "main": [
         [
           {
-            "node": "Respond 200 ASAP",
+            "node": "IF Method GET",
             "type": "main",
             "index": 0
           }
@@ -2760,14 +2766,14 @@
       "main": [
         [
           {
-            "node": "IF Secret válido",
+            "node": "IF Secret v\u00e1lido",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "IF Secret válido": {
+    "IF Secret v\u00e1lido": {
       "main": [
         [
           {
@@ -2866,14 +2872,14 @@
       "main": [
         [
           {
-            "node": "Preparar acción admin",
+            "node": "Preparar acci\u00f3n admin",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Preparar acción admin": {
+    "Preparar acci\u00f3n admin": {
       "main": [
         [
           {
@@ -3111,14 +3117,14 @@
       "main": [
         [
           {
-            "node": "IF Visión OK",
+            "node": "IF Visi\u00f3n OK",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "IF Visión OK": {
+    "IF Visi\u00f3n OK": {
       "main": [
         [
           {
@@ -3427,17 +3433,6 @@
         ]
       ]
     },
-    "Webhook In (verify)": {
-      "main": [
-        [
-          {
-            "node": "IF verify ok",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Respond 200 ASAP": {
       "main": [
         [
@@ -3461,6 +3456,24 @@
         [
           {
             "node": "Respond verify INVALID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Method GET": {
+      "main": [
+        [
+          {
+            "node": "IF verify ok",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 200 ASAP",
             "type": "main",
             "index": 0
           }
