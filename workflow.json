@@ -408,12 +408,33 @@
     },
     {
       "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "owner_whatsapp",
+              "value": "+51999999999"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7eab12cf-be56-4ca5-9c94-95837025404d",
+      "name": "Set Owner WhatsApp",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        800
+      ]
+    },
+    {
+      "parameters": {
         "conditions": {
           "string": [
             {
               "value1": "={{$json.whatsapp}}",
               "operation": "equals",
-              "value2": "={{$env.OWNER_WHATSAPP}}"
+              "value2": "={{$json.owner_whatsapp}}"
             }
           ]
         },
@@ -2816,7 +2837,7 @@
       "main": [
         [
           {
-            "node": "IF Owner",
+            "node": "Set Owner WhatsApp",
             "type": "main",
             "index": 0
           }
@@ -3473,6 +3494,17 @@
         [
           {
             "node": "Respond 200 ASAP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Owner WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "IF Owner",
             "type": "main",
             "index": 0
           }
