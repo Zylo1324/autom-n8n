@@ -413,7 +413,7 @@
             {
               "value1": "={{$json.whatsapp}}",
               "operation": "equals",
-              "value2": "={{$env.OWNER_WHATSAPP}}"
+              "value2": "={{'+5491112345678'}}"
             }
           ]
         },
