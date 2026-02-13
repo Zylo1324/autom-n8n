@@ -56,7 +56,7 @@
             {
               "id": "hub-token",
               "leftValue": "={{$json.query[\"hub.verify_token\"]}}",
-              "rightValue": "={{$env.WHATSAPP_VERIFY_TOKEN || $vars.WHATSAPP_VERIFY_TOKEN}}",
+              "rightValue": "={{$env.WHATSAPP_VERIFY_TOKEN}}",
               "operator": {
                 "type": "string",
                 "operation": "equals"
@@ -855,16 +855,28 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL}}",
+        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
         "options": {
           "timeout": 10000
-        }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"messaging_product\":\"whatsapp\",\"to\": ($json.owner_whatsapp || $env.OWNER_WHATSAPP || $json.whatsapp || \"\"), \"type\":\"text\", \"text\":{\"body\": ($json.response || $json.texto || \"Acción procesada.\") } } }}"
       },
       "id": "582ad731-4bc0-4a00-b236-38a98c680999",
       "name": "Enviar WhatsApp owner",
@@ -1229,16 +1241,28 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL}}",
+        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
         "options": {
           "timeout": 10000
-        }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"messaging_product\":\"whatsapp\",\"to\": ($json.from || $json.whatsapp || $json.wa_id || \"\"), \"type\":\"text\", \"text\":{\"body\": ($json.response || \"¡Gracias! Registramos tu solicitud y te contactaremos pronto.\") } } }}"
       },
       "id": "680bd704-c13c-4251-889e-51a5bcc8ff9d",
       "name": "Enviar alta cliente",
@@ -1873,16 +1897,28 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL}}",
+        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
         "options": {
           "timeout": 10000
-        }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"messaging_product\":\"whatsapp\",\"to\": ($json.owner_whatsapp || $env.OWNER_WHATSAPP || \"\"), \"type\":\"text\", \"text\":{\"body\": ($json.owner_text || $json.texto_owner || $json.texto || \"Nuevo pago pendiente de validación.\") } } }}"
       },
       "id": "d216c627-1bfa-46a6-be79-e4cfccdad225",
       "name": "Avisar owner",
@@ -1897,16 +1933,28 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL}}",
+        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
         "options": {
           "timeout": 10000
-        }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"messaging_product\":\"whatsapp\",\"to\": ($json.from || $json.whatsapp || $json.wa_id || \"\"), \"type\":\"text\", \"text\":{\"body\": ($json.client_text || $json.texto_cliente || \"Recibimos tu comprobante. Lo validaremos en breve.\") } } }}"
       },
       "id": "4dd4293c-61d1-4a5d-8a5d-ffe27bbac001",
       "name": "Avisar cliente pending",
@@ -1921,16 +1969,28 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL}}",
+        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
         "options": {
           "timeout": 10000
-        }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"messaging_product\":\"whatsapp\",\"to\": ($json.from || $json.whatsapp || $json.wa_id || \"\"), \"type\":\"text\", \"text\":{\"body\": ($json.ask_text || $json.response || \"No pudimos validar el comprobante. Por favor envía datos más claros.\") } } }}"
       },
       "id": "f770fa9b-1e93-44e1-9f9d-a28db8c90789",
       "name": "Pedir datos",
@@ -1945,16 +2005,28 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL}}",
+        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
         "options": {
           "timeout": 10000
-        }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"messaging_product\":\"whatsapp\",\"to\": ($json.from || $json.wa_id || $json.whatsapp || \"\"), \"type\":\"text\", \"text\":{\"body\": ($json.response || $json.ai_response || \"Gracias por tu mensaje.\") } } }}"
       },
       "id": "1c7f61c0-0fee-443f-b446-6853795cc034",
       "name": "Enviar respuesta IA",
@@ -2379,16 +2451,28 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL}}",
+        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
         "options": {
           "timeout": 10000
-        }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"messaging_product\":\"whatsapp\",\"to\": ($json.cliente?.whatsapp || $json.whatsapp || \"\"), \"type\":\"text\", \"text\":{\"body\": ($json.texto || \"Recordatorio de pago.\") } } }}"
       },
       "id": "7427f9cd-3e3d-43e9-ba01-fccebbd6dd5a",
       "name": "Enviar recordatorio",
@@ -2587,16 +2671,28 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL}}",
+        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
         "options": {
           "timeout": 10000
-        }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"messaging_product\":\"whatsapp\",\"to\": ($json.owner_whatsapp || $env.OWNER_WHATSAPP || \"\"), \"type\":\"text\", \"text\":{\"body\": ($json.texto || $json.reporte || \"Reporte diario.\") } } }}"
       },
       "id": "e8a6732a-ad14-4a19-87c4-97329d80e04c",
       "name": "Enviar reporte",
