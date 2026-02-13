@@ -5,7 +5,8 @@
       "parameters": {
         "path": "whatsapp-in-verify",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {},
+        "httpMethod": "GET"
       },
       "id": "548338f2-7c39-45a9-be35-ecae873b8d18",
       "name": "Webhook Verify",
@@ -37,18 +38,32 @@
     {
       "parameters": {
         "conditions": {
-          "string": [
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
             {
-              "value1": "={{$json.query[\"hub.mode\"]}}",
-              "operation": "equals",
-              "value2": "subscribe"
+              "id": "hub-mode",
+              "leftValue": "={{$json.query[\"hub.mode\"]}}",
+              "rightValue": "subscribe",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             },
             {
-              "value1": "={{$json.query[\"hub.verify_token\"]}}",
-              "operation": "equals",
-              "value2": "zylo_verify_token"
+              "id": "hub-token",
+              "leftValue": "={{$json.query[\"hub.verify_token\"]}}",
+              "rightValue": "={{$env.WHATSAPP_VERIFY_TOKEN || $vars.WHATSAPP_VERIFY_TOKEN}}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
-          ]
+          ],
+          "combinator": "and"
         },
         "options": {}
       },
@@ -113,7 +128,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $json;\nconst headers = (data && data.headers) ? data.headers : {};\nconst query = data.query ?? {};\nconst payload = data.body ?? data;\n\n// ✅ Leer variables del workflow (NO $env)\nconst strictSecretCheck = String($vars.STRICT_SECRET_CHECK ?? 'false').toLowerCase() === 'true';\nconst ORIGIN_SECRET = String($vars.ORIGIN_SECRET ?? '');\nconst APP_SECRET = String($vars.APP_SECRET ?? '');\n\nconst originSecret =\n  headers['x-origin-secret'] ||\n  headers['X-Origin-Secret'] ||\n  query.secret;\n\nconst originSecretValid = originSecret && ORIGIN_SECRET\n  ? originSecret === ORIGIN_SECRET\n  : false;\n\nconst signatureHeader =\n  headers['x-hub-signature-256'] ||\n  headers['X-Hub-Signature-256'];\n\nconst rawBody = data.rawBody || data.body || '';\nlet signatureValid = false;\n\nif (signatureHeader && APP_SECRET && rawBody) {\n  const crypto = require('crypto');\n  const expected = `sha256=${crypto.createHmac('sha256', APP_SECRET).update(\n    typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody)\n  ).digest('hex')}`;\n  signatureValid = signatureHeader === expected;\n}\n\nconst validSecret = signatureValid || originSecretValid || !strictSecretCheck;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0] ?? {};\n\nconst from = message.from ?? '';\nconst messageId = message.id ?? '';\nconst timestamp = message.timestamp\n  ? new Date(parseInt(message.timestamp, 10) * 1000).toISOString()\n  : new Date().toISOString();\n\nconst type = message.type || 'text';\n\nlet text = '';\nlet mediaId = '';\nlet mediaMime = '';\n\nif (type === 'text') {\n  text = message.text?.body || '';\n} else if (type === 'image') {\n  mediaId = message.image?.id || '';\n  mediaMime = message.image?.mime_type || '';\n  text = message.image?.caption || '';\n} else if (type === 'document') {\n  mediaId = message.document?.id || '';\n  mediaMime = message.document?.mime_type || '';\n  text = message.document?.caption || '';\n}\n\nconst normalizePhone = (raw) => {\n  const digits = (raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    valid_secret: !!validSecret,\n    signature_valid: !!signatureValid,\n    origin_secret_valid: !!originSecretValid,\n    timestamp,\n    whatsapp: normalizePhone(from),\n    message_id: messageId,\n    message_type: mediaId ? 'media' : 'text',\n    text: text || '',\n    media_id: mediaId || '',\n    media_mime: mediaMime || ''\n  }\n}];"
+        "jsCode": "const data = $json;\nconst headers = data.headers ?? {};\nconst payload = data.body ?? data;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0];\n\nconst signatureHeader = headers['x-hub-signature-256'] || headers['X-Hub-Signature-256'] || '';\nconst appSecret = $env.WHATSAPP_APP_SECRET || $vars.WHATSAPP_APP_SECRET || '';\n\n// Validación opcional (no bloqueante por defecto)\nlet signature_valid = false;\nif (signatureHeader && appSecret) {\n  try {\n    const crypto = require('crypto');\n    const rawBody = data.rawBody || data.body || '';\n    const rawString = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);\n    const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawString).digest('hex')}`;\n    signature_valid = signatureHeader === expected;\n  } catch (error) {\n    signature_valid = false;\n  }\n}\n\nif (!message) {\n  return [{\n    json: {\n      has_message: false,\n      should_skip: true,\n      skip_reason: 'Evento sin messages (ej. status).',\n      signature_present: !!signatureHeader,\n      signature_valid,\n      valid_secret: true, // TODO: endurecer si se requiere bloqueo por firma\n    }\n  }];\n}\n\nconst type = message.type || 'text';\nconst textBody = message.text?.body || '';\nconst timestampSec = message.timestamp ? Number(message.timestamp) : Math.floor(Date.now() / 1000);\nconst isoTimestamp = new Date(timestampSec * 1000).toISOString();\nconst from = message.from || '';\nconst wa_id = value.contacts?.[0]?.wa_id || from;\n\nconst normalizePhone = (raw) => {\n  const digits = String(raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    has_message: true,\n    should_skip: false,\n    signature_present: !!signatureHeader,\n    signature_valid,\n    valid_secret: true, // TODO: si activan validación estricta, usar signature_valid cuando llegue header\n\n    wa_id,\n    from,\n    timestamp: isoTimestamp,\n    type,\n    text: textBody,\n    message_id: message.id || '',\n\n    // compatibilidad con ramas existentes\n    whatsapp: normalizePhone(from),\n    message_type: type,\n    media_id: '',\n    media_mime: '',\n  }\n}];\n"
       },
       "id": "abc405b5-ce26-4582-9498-9069071ab777",
       "name": "Normalizar y validar",
@@ -129,7 +144,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{$json.valid_secret}}",
+              "value1": "={{$json.valid_secret !== false}}",
               "value2": true
             }
           ]
@@ -150,6 +165,18 @@
         "values": {
           "string": [
             {
+              "name": "received_at",
+              "value": "={{$json.timestamp}}"
+            },
+            {
+              "name": "from",
+              "value": "={{$json.from || $json.whatsapp}}"
+            },
+            {
+              "name": "wa_id",
+              "value": "={{$json.wa_id || $json.from || $json.whatsapp}}"
+            },
+            {
               "name": "timestamp",
               "value": "={{$json.timestamp}}"
             },
@@ -163,7 +190,7 @@
             },
             {
               "name": "message_type",
-              "value": "={{$json.message_type}}"
+              "value": "={{$json.message_type || $json.type}}"
             },
             {
               "name": "text",
@@ -179,7 +206,7 @@
             },
             {
               "name": "status",
-              "value": "PENDING"
+              "value": "NEW"
             },
             {
               "name": "batch_id"
@@ -224,8 +251,11 @@
             "message_type": "={{$json.message_type}}",
             "media_id": "={{$json.media_id}}",
             "media_mime": "={{$json.media_mime}}",
-            "status": "={{$json.status}}",
-            "batch_id": "={{$json.batch_id}}"
+            "status": "={{$json.status || \"NEW\"}}",
+            "batch_id": "={{$json.batch_id}}",
+            "received_at": "={{$json.received_at || $json.timestamp}}",
+            "from": "={{$json.from || $json.whatsapp}}",
+            "wa_id": "={{$json.wa_id || $json.from || $json.whatsapp}}"
           },
           "matchingColumns": [],
           "schema": [
@@ -395,7 +425,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Debounce window en segundos (NO usa $env porque tu n8n lo bloquea)\nconst WINDOW_SEC = 12;\n\nconst now = Date.now();\nconst rows = items.map(i => i.json);\n\n// Solo mensajes pendientes\nconst pending = rows.filter(r => String(r.status || '').toUpperCase() === 'PENDING');\n\n// Agrupar por whatsapp\nconst byWhatsapp = {};\nfor (const row of pending) {\n  const wa = row.whatsapp || '';\n  if (!wa) continue;\n  if (!byWhatsapp[wa]) byWhatsapp[wa] = [];\n  byWhatsapp[wa].push(row);\n}\n\nconst output = [];\n\nfor (const [wa, msgs] of Object.entries(byWhatsapp)) {\n  // Ordenar por timestamp asc\n  const sorted = msgs.sort((a, b) => {\n    const ta = new Date(a.timestamp).getTime() || 0;\n    const tb = new Date(b.timestamp).getTime() || 0;\n    return ta - tb;\n  });\n\n  const last = sorted[sorted.length - 1];\n  const lastTs = new Date(last.timestamp).getTime();\n\n  // Si el timestamp está mal, evita crashear\n  if (!lastTs) continue;\n\n  const ageSec = (now - lastTs) / 1000;\n\n  // Si el último mensaje es “reciente”, todavía esperamos (debounce)\n  if (ageSec < WINDOW_SEC) continue;\n\n  // Unir texto (OJO: el salto de línea correcto es '\\n')\n  const combinedText = sorted\n    .map(m => m.text)\n    .filter(Boolean)\n    .join('\\n');\n\n  const isImage = (m) => (String(m.media_mime || '').toLowerCase().startsWith('image/'));\n  const hasImage = sorted.some(isImage);\n\n  const mediaIds = sorted\n    .filter(isImage)\n    .map(m => m.media_id)\n    .filter(Boolean);\n\n  const pendingTimestamps = sorted.map(m => m.timestamp).filter(Boolean);\n  const pendingMessageIds = sorted.map(m => m.message_id).filter(Boolean);\n\n  output.push({\n    json: {\n      whatsapp: wa,\n      combined_text: combinedText,\n      has_image: hasImage,\n      media_ids: mediaIds,\n      pending_timestamps: pendingTimestamps,\n      pending_message_ids: pendingMessageIds,\n      last_message_at: last.timestamp,\n      batch_id: `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`\n    }\n  });\n}\n\nreturn output;"
+        "jsCode": "// Debounce window en segundos (NO usa $env porque tu n8n lo bloquea)\nconst WINDOW_SEC = 12;\n\nconst now = Date.now();\nconst rows = items.map(i => i.json);\n\n// Solo mensajes pendientes\nconst pending = rows.filter(r => ['PENDING','NEW'].includes(String(r.status || '').toUpperCase()));\n\n// Agrupar por whatsapp\nconst byWhatsapp = {};\nfor (const row of pending) {\n  const wa = row.whatsapp || '';\n  if (!wa) continue;\n  if (!byWhatsapp[wa]) byWhatsapp[wa] = [];\n  byWhatsapp[wa].push(row);\n}\n\nconst output = [];\n\nfor (const [wa, msgs] of Object.entries(byWhatsapp)) {\n  // Ordenar por timestamp asc\n  const sorted = msgs.sort((a, b) => {\n    const ta = new Date(a.timestamp).getTime() || 0;\n    const tb = new Date(b.timestamp).getTime() || 0;\n    return ta - tb;\n  });\n\n  const last = sorted[sorted.length - 1];\n  const lastTs = new Date(last.timestamp).getTime();\n\n  // Si el timestamp está mal, evita crashear\n  if (!lastTs) continue;\n\n  const ageSec = (now - lastTs) / 1000;\n\n  // Si el último mensaje es “reciente”, todavía esperamos (debounce)\n  if (ageSec < WINDOW_SEC) continue;\n\n  // Unir texto (OJO: el salto de línea correcto es '\\n')\n  const combinedText = sorted\n    .map(m => m.text)\n    .filter(Boolean)\n    .join('\\n');\n\n  const isImage = (m) => (String(m.media_mime || '').toLowerCase().startsWith('image/'));\n  const hasImage = sorted.some(isImage);\n\n  const mediaIds = sorted\n    .filter(isImage)\n    .map(m => m.media_id)\n    .filter(Boolean);\n\n  const pendingTimestamps = sorted.map(m => m.timestamp).filter(Boolean);\n  const pendingMessageIds = sorted.map(m => m.message_id).filter(Boolean);\n\n  output.push({\n    json: {\n      whatsapp: wa,\n      combined_text: combinedText,\n      has_image: hasImage,\n      media_ids: mediaIds,\n      pending_timestamps: pendingTimestamps,\n      pending_message_ids: pendingMessageIds,\n      last_message_at: last.timestamp,\n      batch_id: `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`\n    }\n  });\n}\n\nreturn output;"
       },
       "id": "8ce21901-6ae8-46f0-9a50-74227b86b434",
       "name": "Agrupar y debounce",
@@ -2880,6 +2910,27 @@
         3152,
         2272
       ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.has_message}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "if-tiene-mensaje",
+      "name": "IF tiene mensaje",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1180,
+        -220
+      ]
     }
   ],
   "pinData": {},
@@ -2888,7 +2939,7 @@
       "main": [
         [
           {
-            "node": "IF Secret válido",
+            "node": "IF tiene mensaje",
             "type": "main",
             "index": 0
           }
@@ -3615,6 +3666,18 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "IF tiene mensaje": {
+      "main": [
+        [
+          {
+            "node": "IF Secret válido",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     }
   },
