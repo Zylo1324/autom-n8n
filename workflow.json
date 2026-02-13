@@ -442,7 +442,7 @@
           "string": [
             {
               "name": "owner_whatsapp",
-              "value": "+51999999999"
+              "value": "={{$env.WHATSAPP_OWNER_NUMBER || $vars.WHATSAPP_OWNER_NUMBER}}"
             }
           ]
         },
@@ -912,7 +912,7 @@
             "timestamp": "={{$json.timestamp}}",
             "whatsapp": "={{$json.whatsapp}}",
             "mensaje_usuario": "={{$json.mensaje_usuario}}",
-            "tipo_mensaje": "={{$json.mensaje_usuario}}",
+            "tipo_mensaje": "={{$json.tipo_mensaje}}",
             "media_url": "={{$json.media_url}}",
             "procesado": "={{$json.procesado}}"
           },
