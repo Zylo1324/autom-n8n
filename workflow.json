@@ -5,7 +5,8 @@
       "parameters": {
         "path": "whatsapp-in-verify",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {},
+        "httpMethod": "GET"
       },
       "id": "bab3accb-b1ad-4867-bb70-67e346b80600",
       "name": "Webhook Verify",
@@ -44,15 +45,6 @@
             "version": 1
           },
           "conditions": [
-            {
-              "id": "hub-mode",
-              "leftValue": "={{$json.query[\"hub.mode\"]}}",
-              "rightValue": "subscribe",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            },
             {
               "id": "hub-token",
               "leftValue": "={{$json.query[\"hub.verify_token\"]}}",
