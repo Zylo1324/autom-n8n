@@ -128,7 +128,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $json;\nconst headers = data.headers ?? {};\nconst payload = data.body ?? data;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0];\n\nconst signatureHeader = headers['x-hub-signature-256'] || headers['X-Hub-Signature-256'] || '';\nconst appSecret = $vars.WHATSAPP_APP_SECRET || '';\n\n// Validación opcional (no bloqueante por defecto)\nlet signature_valid = false;\nif (signatureHeader && appSecret) {\n  try {\n    const crypto = require('crypto');\n    const rawBody = data.rawBody || data.body || '';\n    const rawString = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);\n    const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawString).digest('hex')}`;\n    signature_valid = signatureHeader === expected;\n  } catch (error) {\n    signature_valid = false;\n  }\n}\n\nif (!message) {\n  return [{\n    json: {\n      has_message: false,\n      should_skip: true,\n      skip_reason: 'Evento sin messages (ej. status).',\n      signature_present: !!signatureHeader,\n      signature_valid,\n      valid_secret: true, // TODO: endurecer si se requiere bloqueo por firma\n    }\n  }];\n}\n\nconst type = message.type || 'text';\nconst textBody = message.text?.body || '';\nconst timestampSec = message.timestamp ? Number(message.timestamp) : Math.floor(Date.now() / 1000);\nconst isoTimestamp = new Date(timestampSec * 1000).toISOString();\nconst from = message.from || '';\nconst wa_id = value.contacts?.[0]?.wa_id || from;\n\nconst normalizePhone = (raw) => {\n  const digits = String(raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    has_message: true,\n    should_skip: false,\n    signature_present: !!signatureHeader,\n    signature_valid,\n    valid_secret: true, // TODO: si activan validación estricta, usar signature_valid cuando llegue header\n\n    wa_id,\n    from,\n    timestamp: isoTimestamp,\n    type,\n    text: textBody,\n    message_id: message.id || '',\n\n    // compatibilidad con ramas existentes\n    whatsapp: normalizePhone(from),\n    message_type: type,\n    media_id: '',\n    media_mime: '',\n  }\n}];\n"
+        "jsCode": "const data = $json;\nconst headers = data.headers ?? {};\nconst payload = data.body ?? data;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0];\n\nconst signatureHeader = headers['x-hub-signature-256'] || headers['X-Hub-Signature-256'] || '';\nconst appSecret = $vars.WHATSAPP_APP_SECRET || '';\n\n// Validación opcional (no bloqueante por defecto)\nlet signature_valid = false;\nif (signatureHeader && appSecret) {\n  try {\n    const crypto = require('crypto');\n    const rawBody = data.rawBody || data.body || '';\n    const rawString = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);\n    const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawString).digest('hex')}`;\n    signature_valid = signatureHeader === expected;\n  } catch (error) {\n    signature_valid = false;\n  }\n}\n\nif (!message) {\n  return [{\n    json: {\n      has_message: false,\n      should_skip: true,\n      skip_reason: 'Evento sin messages (ej. status).',\n      signature_present: !!signatureHeader,\n      signature_valid,\n      valid_secret: true, // TODO: endurecer si se requiere bloqueo por firma\n    }\n  }];\n}\n\nconst type = message.type || 'text';\nconst textBody = message.text?.body || '';\nconst parsedTimestamp = Number(message.timestamp);\nconst timestampSec = Number.isFinite(parsedTimestamp) && parsedTimestamp > 0\n  ? parsedTimestamp\n  : Math.floor(Date.now() / 1000);\nconst isoTimestamp = Number.isFinite(timestampSec)\n  ? new Date(timestampSec * 1000).toISOString()\n  : '';\nconst from = message.from || '';\nconst wa_id = value.contacts?.[0]?.wa_id || from;\n\nconst normalizePhone = (raw) => {\n  const digits = String(raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    has_message: true,\n    should_skip: false,\n    signature_present: !!signatureHeader,\n    signature_valid,\n    valid_secret: true, // TODO: si activan validación estricta, usar signature_valid cuando llegue header\n\n    wa_id,\n    from,\n    timestamp: timestampSec,\n    isoTimestamp,\n    type,\n    text: textBody,\n    message_id: message.id || '',\n\n    // compatibilidad con ramas existentes\n    whatsapp: normalizePhone(from),\n    message_type: type,\n    media_id: '',\n    media_mime: '',\n  }\n}];\n"
       },
       "id": "8c109180-30db-436b-b1f4-fe0f1695526a",
       "name": "Normalizar y validar",
@@ -1654,7 +1654,7 @@
     },
     {
       "parameters": {
-        "url": "={{$vars.WHATSAPP_GRAPH_URL + '/' + $json.media_ids[0]}}",
+        "url": "={{Array.isArray($json.media_ids) && $json.media_ids[0] ? ($vars.WHATSAPP_GRAPH_URL + '/' + $json.media_ids[0]) : ''}}",
         "options": {
           "timeout": 10000
         }
@@ -3013,6 +3013,196 @@
         3152,
         6112
       ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "warning",
+              "value": "Faltan variables requeridas para WhatsApp request (PHONE_NUMBER_ID/WHATSAPP_TOKEN). Request omitido."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "841b7b24-4d97-4e41-956f-12189628fd06",
+      "name": "Log / Stop vars missing",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5200,
+        7600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1dab4f18-47ab-4229-9051-ada7a7482b2e",
+      "name": "IF vars ok Enviar WhatsApp owner",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        5104,
+        6560
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "59aae642-14f9-445f-b582-a2bf7ab9fa67",
+      "name": "IF vars ok Enviar alta cliente",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4624,
+        6848
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3db38dc4-10ab-4b6a-81ff-92dae986e6e2",
+      "name": "IF vars ok Avisar owner",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        7456,
+        6736
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c8ca3d40-ef94-4d18-b186-b2af1b2dffbb",
+      "name": "IF vars ok Avisar cliente pending",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        7680,
+        6736
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "98e891b2-05a8-4cf5-a968-7aadf50ac24c",
+      "name": "IF vars ok Pedir datos",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        7008,
+        6896
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "02b12dc0-22c0-4222-90fe-80ef5e9e5fd3",
+      "name": "IF vars ok Enviar respuesta IA",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        5728,
+        6992
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3500c408-fe7d-4d51-9ca4-6a67e100a94f",
+      "name": "IF vars ok Enviar recordatorio",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3984,
+        7280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cb9f8304-e2ab-4631-b68b-da671dd7e77c",
+      "name": "IF vars ok Enviar reporte",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3776,
+        7520
+      ]
     }
   ],
   "pinData": {},
@@ -3222,7 +3412,7 @@
         ],
         [
           {
-            "node": "Enviar alta cliente",
+            "node": "IF vars ok Enviar alta cliente",
             "type": "main",
             "index": 0
           }
@@ -3317,7 +3507,7 @@
         ],
         [
           {
-            "node": "Enviar respuesta IA",
+            "node": "IF vars ok Enviar respuesta IA",
             "type": "main",
             "index": 0
           }
@@ -3390,7 +3580,7 @@
         ],
         [
           {
-            "node": "Pedir datos",
+            "node": "IF vars ok Pedir datos",
             "type": "main",
             "index": 0
           }
@@ -3412,7 +3602,7 @@
       "main": [
         [
           {
-            "node": "Avisar owner",
+            "node": "IF vars ok Avisar owner",
             "type": "main",
             "index": 0
           }
@@ -3423,7 +3613,7 @@
       "main": [
         [
           {
-            "node": "Avisar cliente pending",
+            "node": "IF vars ok Avisar cliente pending",
             "type": "main",
             "index": 0
           }
@@ -3505,7 +3695,7 @@
       "main": [
         [
           {
-            "node": "Enviar recordatorio",
+            "node": "IF vars ok Enviar recordatorio",
             "type": "main",
             "index": 0
           }
@@ -3560,7 +3750,7 @@
       "main": [
         [
           {
-            "node": "Enviar reporte",
+            "node": "IF vars ok Enviar reporte",
             "type": "main",
             "index": 0
           }
@@ -3659,7 +3849,7 @@
       "main": [
         [
           {
-            "node": "Enviar WhatsApp owner",
+            "node": "IF vars ok Enviar WhatsApp owner",
             "type": "main",
             "index": 0
           }
@@ -3670,7 +3860,7 @@
       "main": [
         [
           {
-            "node": "Enviar WhatsApp owner",
+            "node": "IF vars ok Enviar WhatsApp owner",
             "type": "main",
             "index": 0
           }
@@ -3755,6 +3945,150 @@
         [
           {
             "node": "IF Secret válido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF vars ok Enviar WhatsApp owner": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp owner",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log / Stop vars missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF vars ok Enviar alta cliente": {
+      "main": [
+        [
+          {
+            "node": "Enviar alta cliente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log / Stop vars missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF vars ok Avisar owner": {
+      "main": [
+        [
+          {
+            "node": "Avisar owner",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log / Stop vars missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF vars ok Avisar cliente pending": {
+      "main": [
+        [
+          {
+            "node": "Avisar cliente pending",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log / Stop vars missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF vars ok Pedir datos": {
+      "main": [
+        [
+          {
+            "node": "Pedir datos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log / Stop vars missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF vars ok Enviar respuesta IA": {
+      "main": [
+        [
+          {
+            "node": "Enviar respuesta IA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log / Stop vars missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF vars ok Enviar recordatorio": {
+      "main": [
+        [
+          {
+            "node": "Enviar recordatorio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log / Stop vars missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF vars ok Enviar reporte": {
+      "main": [
+        [
+          {
+            "node": "Enviar reporte",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log / Stop vars missing",
             "type": "main",
             "index": 0
           }
