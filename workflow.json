@@ -56,7 +56,7 @@
             {
               "id": "hub-token",
               "leftValue": "={{$json.query[\"hub.verify_token\"]}}",
-              "rightValue": "=zylo-token",
+              "rightValue": "={{$variables.WHATSAPP_VERIFY_TOKEN}}",
               "operator": {
                 "type": "string",
                 "operation": "equals"
@@ -128,7 +128,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $json;\nconst headers = data.headers ?? {};\nconst payload = data.body ?? data;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0];\n\nconst signatureHeader = headers['x-hub-signature-256'] || headers['X-Hub-Signature-256'] || '';\nconst appSecret = $env.WHATSAPP_APP_SECRET || $vars.WHATSAPP_APP_SECRET || '';\n\n// Validación opcional (no bloqueante por defecto)\nlet signature_valid = false;\nif (signatureHeader && appSecret) {\n  try {\n    const crypto = require('crypto');\n    const rawBody = data.rawBody || data.body || '';\n    const rawString = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);\n    const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawString).digest('hex')}`;\n    signature_valid = signatureHeader === expected;\n  } catch (error) {\n    signature_valid = false;\n  }\n}\n\nif (!message) {\n  return [{\n    json: {\n      has_message: false,\n      should_skip: true,\n      skip_reason: 'Evento sin messages (ej. status).',\n      signature_present: !!signatureHeader,\n      signature_valid,\n      valid_secret: true, // TODO: endurecer si se requiere bloqueo por firma\n    }\n  }];\n}\n\nconst type = message.type || 'text';\nconst textBody = message.text?.body || '';\nconst timestampSec = message.timestamp ? Number(message.timestamp) : Math.floor(Date.now() / 1000);\nconst isoTimestamp = new Date(timestampSec * 1000).toISOString();\nconst from = message.from || '';\nconst wa_id = value.contacts?.[0]?.wa_id || from;\n\nconst normalizePhone = (raw) => {\n  const digits = String(raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    has_message: true,\n    should_skip: false,\n    signature_present: !!signatureHeader,\n    signature_valid,\n    valid_secret: true, // TODO: si activan validación estricta, usar signature_valid cuando llegue header\n\n    wa_id,\n    from,\n    timestamp: isoTimestamp,\n    type,\n    text: textBody,\n    message_id: message.id || '',\n\n    // compatibilidad con ramas existentes\n    whatsapp: normalizePhone(from),\n    message_type: type,\n    media_id: '',\n    media_mime: '',\n  }\n}];\n"
+        "jsCode": "const data = $json;\nconst headers = data.headers ?? {};\nconst payload = data.body ?? data;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0];\n\nconst signatureHeader = headers['x-hub-signature-256'] || headers['X-Hub-Signature-256'] || '';\nconst appSecret = $variables.WHATSAPP_APP_SECRET || '';\n\n// Validación opcional (no bloqueante por defecto)\nlet signature_valid = false;\nif (signatureHeader && appSecret) {\n  try {\n    const crypto = require('crypto');\n    const rawBody = data.rawBody || data.body || '';\n    const rawString = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);\n    const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawString).digest('hex')}`;\n    signature_valid = signatureHeader === expected;\n  } catch (error) {\n    signature_valid = false;\n  }\n}\n\nif (!message) {\n  return [{\n    json: {\n      has_message: false,\n      should_skip: true,\n      skip_reason: 'Evento sin messages (ej. status).',\n      signature_present: !!signatureHeader,\n      signature_valid,\n      valid_secret: true, // TODO: endurecer si se requiere bloqueo por firma\n    }\n  }];\n}\n\nconst type = message.type || 'text';\nconst textBody = message.text?.body || '';\nconst timestampSec = message.timestamp ? Number(message.timestamp) : Math.floor(Date.now() / 1000);\nconst isoTimestamp = new Date(timestampSec * 1000).toISOString();\nconst from = message.from || '';\nconst wa_id = value.contacts?.[0]?.wa_id || from;\n\nconst normalizePhone = (raw) => {\n  const digits = String(raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    has_message: true,\n    should_skip: false,\n    signature_present: !!signatureHeader,\n    signature_valid,\n    valid_secret: true, // TODO: si activan validación estricta, usar signature_valid cuando llegue header\n\n    wa_id,\n    from,\n    timestamp: isoTimestamp,\n    type,\n    text: textBody,\n    message_id: message.id || '',\n\n    // compatibilidad con ramas existentes\n    whatsapp: normalizePhone(from),\n    message_type: type,\n    media_id: '',\n    media_mime: '',\n  }\n}];\n"
       },
       "id": "8c109180-30db-436b-b1f4-fe0f1695526a",
       "name": "Normalizar y validar",
@@ -425,7 +425,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Debounce window en segundos (NO usa $env porque tu n8n lo bloquea)\nconst WINDOW_SEC = 12;\n\nconst now = Date.now();\nconst rows = items.map(i => i.json);\n\n// Solo mensajes pendientes\nconst pending = rows.filter(r => ['PENDING','NEW'].includes(String(r.status || '').toUpperCase()));\n\n// Agrupar por whatsapp\nconst byWhatsapp = {};\nfor (const row of pending) {\n  const wa = row.whatsapp || '';\n  if (!wa) continue;\n  if (!byWhatsapp[wa]) byWhatsapp[wa] = [];\n  byWhatsapp[wa].push(row);\n}\n\nconst output = [];\n\nfor (const [wa, msgs] of Object.entries(byWhatsapp)) {\n  // Ordenar por timestamp asc\n  const sorted = msgs.sort((a, b) => {\n    const ta = new Date(a.timestamp).getTime() || 0;\n    const tb = new Date(b.timestamp).getTime() || 0;\n    return ta - tb;\n  });\n\n  const last = sorted[sorted.length - 1];\n  const lastTs = new Date(last.timestamp).getTime();\n\n  // Si el timestamp está mal, evita crashear\n  if (!lastTs) continue;\n\n  const ageSec = (now - lastTs) / 1000;\n\n  // Si el último mensaje es “reciente”, todavía esperamos (debounce)\n  if (ageSec < WINDOW_SEC) continue;\n\n  // Unir texto (OJO: el salto de línea correcto es '\\n')\n  const combinedText = sorted\n    .map(m => m.text)\n    .filter(Boolean)\n    .join('\\n');\n\n  const isImage = (m) => (String(m.media_mime || '').toLowerCase().startsWith('image/'));\n  const hasImage = sorted.some(isImage);\n\n  const mediaIds = sorted\n    .filter(isImage)\n    .map(m => m.media_id)\n    .filter(Boolean);\n\n  const pendingTimestamps = sorted.map(m => m.timestamp).filter(Boolean);\n  const pendingMessageIds = sorted.map(m => m.message_id).filter(Boolean);\n\n  output.push({\n    json: {\n      whatsapp: wa,\n      combined_text: combinedText,\n      has_image: hasImage,\n      media_ids: mediaIds,\n      pending_timestamps: pendingTimestamps,\n      pending_message_ids: pendingMessageIds,\n      last_message_at: last.timestamp,\n      batch_id: `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`\n    }\n  });\n}\n\nreturn output;"
+        "jsCode": "// Debounce window en segundos (NO usa $variables de entorno bloqueadas en nodos)\nconst WINDOW_SEC = 12;\n\nconst now = Date.now();\nconst rows = items.map(i => i.json);\n\n// Solo mensajes pendientes\nconst pending = rows.filter(r => ['PENDING','NEW'].includes(String(r.status || '').toUpperCase()));\n\n// Agrupar por whatsapp\nconst byWhatsapp = {};\nfor (const row of pending) {\n  const wa = row.whatsapp || '';\n  if (!wa) continue;\n  if (!byWhatsapp[wa]) byWhatsapp[wa] = [];\n  byWhatsapp[wa].push(row);\n}\n\nconst output = [];\n\nfor (const [wa, msgs] of Object.entries(byWhatsapp)) {\n  // Ordenar por timestamp asc\n  const sorted = msgs.sort((a, b) => {\n    const ta = new Date(a.timestamp).getTime() || 0;\n    const tb = new Date(b.timestamp).getTime() || 0;\n    return ta - tb;\n  });\n\n  const last = sorted[sorted.length - 1];\n  const lastTs = new Date(last.timestamp).getTime();\n\n  // Si el timestamp está mal, evita crashear\n  if (!lastTs) continue;\n\n  const ageSec = (now - lastTs) / 1000;\n\n  // Si el último mensaje es “reciente”, todavía esperamos (debounce)\n  if (ageSec < WINDOW_SEC) continue;\n\n  // Unir texto (OJO: el salto de línea correcto es '\\n')\n  const combinedText = sorted\n    .map(m => m.text)\n    .filter(Boolean)\n    .join('\\n');\n\n  const isImage = (m) => (String(m.media_mime || '').toLowerCase().startsWith('image/'));\n  const hasImage = sorted.some(isImage);\n\n  const mediaIds = sorted\n    .filter(isImage)\n    .map(m => m.media_id)\n    .filter(Boolean);\n\n  const pendingTimestamps = sorted.map(m => m.timestamp).filter(Boolean);\n  const pendingMessageIds = sorted.map(m => m.message_id).filter(Boolean);\n\n  output.push({\n    json: {\n      whatsapp: wa,\n      combined_text: combinedText,\n      has_image: hasImage,\n      media_ids: mediaIds,\n      pending_timestamps: pendingTimestamps,\n      pending_message_ids: pendingMessageIds,\n      last_message_at: last.timestamp,\n      batch_id: `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`\n    }\n  });\n}\n\nreturn output;"
       },
       "id": "3ebd0078-9ba7-44a2-bf98-b895ed4cb420",
       "name": "Agrupar y debounce",
@@ -442,7 +442,7 @@
           "string": [
             {
               "name": "owner_whatsapp",
-              "value": "={ $vars.WHATSAPP_OWNER_NUMBER }}"
+              "value": "={{ $variables.WHATSAPP_OWNER_NUMBER || $json.whatsapp }}"
             }
           ]
         },
@@ -857,13 +857,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
+        "url": "https://graph.facebook.com/v24.0/{{ $variables.PHONE_NUMBER_ID }}/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+              "value": "Bearer {{ $variables.WHATSAPP_TOKEN }}"
             },
             {
               "name": "Content-Type",
@@ -1241,13 +1241,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
+        "url": "https://graph.facebook.com/v24.0/{{ $variables.PHONE_NUMBER_ID }}/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+              "value": "Bearer {{ $variables.WHATSAPP_TOKEN }}"
             },
             {
               "name": "Content-Type",
@@ -1654,7 +1654,7 @@
     },
     {
       "parameters": {
-        "url": "={{$env.WHATSAPP_GRAPH_URL}}/{{$json.media_ids[0]}}",
+        "url": "={{$variables.WHATSAPP_GRAPH_URL}}/{{$json.media_ids[0]}}",
         "options": {
           "timeout": 10000
         }
@@ -1895,13 +1895,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
+        "url": "https://graph.facebook.com/v24.0/{{ $variables.PHONE_NUMBER_ID }}/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+              "value": "Bearer {{ $variables.WHATSAPP_TOKEN }}"
             },
             {
               "name": "Content-Type",
@@ -1929,13 +1929,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
+        "url": "https://graph.facebook.com/v24.0/{{ $variables.PHONE_NUMBER_ID }}/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+              "value": "Bearer {{ $variables.WHATSAPP_TOKEN }}"
             },
             {
               "name": "Content-Type",
@@ -1963,13 +1963,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
+        "url": "https://graph.facebook.com/v24.0/{{ $variables.PHONE_NUMBER_ID }}/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+              "value": "Bearer {{ $variables.WHATSAPP_TOKEN }}"
             },
             {
               "name": "Content-Type",
@@ -1997,13 +1997,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
+        "url": "https://graph.facebook.com/v24.0/{{ $variables.PHONE_NUMBER_ID }}/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+              "value": "Bearer {{ $variables.WHATSAPP_TOKEN }}"
             },
             {
               "name": "Content-Type",
@@ -2441,13 +2441,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
+        "url": "https://graph.facebook.com/v24.0/{{ $variables.PHONE_NUMBER_ID }}/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+              "value": "Bearer {{ $variables.WHATSAPP_TOKEN }}"
             },
             {
               "name": "Content-Type",
@@ -2659,13 +2659,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHATSAPP_API_URL || (\"https://graph.facebook.com/v24.0/\" + $env.PHONE_NUMBER_ID + \"/messages\")}}",
+        "url": "https://graph.facebook.com/v24.0/{{ $variables.PHONE_NUMBER_ID }}/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $env.WHATSAPP_TOKEN}}"
+              "value": "Bearer {{ $variables.WHATSAPP_TOKEN }}"
             },
             {
               "name": "Content-Type",
