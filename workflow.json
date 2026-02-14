@@ -6,7 +6,8 @@
         "path": "whatsapp-in-verify",
         "responseMode": "responseNode",
         "options": {},
-        "httpMethod": "GET"
+        "httpMethod": "GET",
+        "authentication": "none"
       },
       "id": "bab3accb-b1ad-4867-bb70-67e346b80600",
       "name": "Webhook Verify",
@@ -46,9 +47,18 @@
           },
           "conditions": [
             {
+              "id": "hub-mode",
+              "leftValue": "={{$json.query[\"hub.mode\"]}}",
+              "rightValue": "subscribe",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
               "id": "hub-token",
               "leftValue": "={{$json.query[\"hub.verify_token\"]}}",
-              "rightValue": "={{$vars.WHATSAPP_VERIFY_TOKEN}}",
+              "rightValue": "token-zylo",
               "operator": {
                 "type": "string",
                 "operation": "equals"
@@ -96,7 +106,7 @@
     {
       "parameters": {
         "respondWith": "text",
-        "responseBody": "Forbidden",
+        "responseBody": "INVALID_TOKEN",
         "options": {
           "responseCode": 403,
           "responseHeaders": {
@@ -120,7 +130,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $json;\nconst headers = data.headers ?? {};\nconst payload = data.body ?? data;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0];\n\nconst signatureHeader = headers['x-hub-signature-256'] || headers['X-Hub-Signature-256'] || '';\nconst appSecret = $vars.WHATSAPP_APP_SECRET || '';\n\n// Validación opcional (no bloqueante por defecto)\nlet signature_valid = false;\nif (signatureHeader && appSecret) {\n  try {\n    const crypto = require('crypto');\n    const rawBody = data.rawBody || data.body || '';\n    const rawString = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);\n    const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawString).digest('hex')}`;\n    signature_valid = signatureHeader === expected;\n  } catch (error) {\n    signature_valid = false;\n  }\n}\n\nif (!message) {\n  return [{\n    json: {\n      has_message: false,\n      should_skip: true,\n      skip_reason: 'Evento sin messages (ej. status).',\n      signature_present: !!signatureHeader,\n      signature_valid,\n      valid_secret: true, // TODO: endurecer si se requiere bloqueo por firma\n    }\n  }];\n}\n\nconst type = message.type || 'text';\nconst textBody = message.text?.body || '';\nconst parsedTimestamp = Number(message.timestamp);\nconst timestampSec = Number.isFinite(parsedTimestamp) && parsedTimestamp > 0\n  ? parsedTimestamp\n  : Math.floor(Date.now() / 1000);\nconst isoTimestamp = Number.isFinite(timestampSec)\n  ? new Date(timestampSec * 1000).toISOString()\n  : '';\nconst from = message.from || '';\nconst wa_id = value.contacts?.[0]?.wa_id || from;\n\nconst normalizePhone = (raw) => {\n  const digits = String(raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    has_message: true,\n    should_skip: false,\n    signature_present: !!signatureHeader,\n    signature_valid,\n    valid_secret: true, // TODO: si activan validación estricta, usar signature_valid cuando llegue header\n\n    wa_id,\n    from,\n    timestamp: timestampSec,\n    isoTimestamp,\n    type,\n    text: textBody,\n    message_id: message.id || '',\n\n    // compatibilidad con ramas existentes\n    whatsapp: normalizePhone(from),\n    message_type: type,\n    media_id: '',\n    media_mime: '',\n  }\n}];\n"
+        "jsCode": "const data = $json;\nconst headers = data.headers ?? {};\nconst payload = data.body ?? data;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0];\n\nconst signatureHeader = headers['x-hub-signature-256'] || headers['X-Hub-Signature-256'] || '';\nconst appSecret = \"__REPLACE_APP_SECRET__\" || '';\n\n// Validación opcional (no bloqueante por defecto)\nlet signature_valid = false;\nif (signatureHeader && appSecret) {\n  try {\n    const crypto = require('crypto');\n    const rawBody = data.rawBody || data.body || '';\n    const rawString = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);\n    const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawString).digest('hex')}`;\n    signature_valid = signatureHeader === expected;\n  } catch (error) {\n    signature_valid = false;\n  }\n}\n\nif (!message) {\n  return [{\n    json: {\n      has_message: false,\n      should_skip: true,\n      skip_reason: 'Evento sin messages (ej. status).',\n      signature_present: !!signatureHeader,\n      signature_valid,\n      valid_secret: true, // TODO: endurecer si se requiere bloqueo por firma\n    }\n  }];\n}\n\nconst type = message.type || 'text';\nconst textBody = message.text?.body || '';\nconst parsedTimestamp = Number(message.timestamp);\nconst timestampSec = Number.isFinite(parsedTimestamp) && parsedTimestamp > 0\n  ? parsedTimestamp\n  : Math.floor(Date.now() / 1000);\nconst isoTimestamp = Number.isFinite(timestampSec)\n  ? new Date(timestampSec * 1000).toISOString()\n  : '';\nconst from = message.from || '';\nconst wa_id = value.contacts?.[0]?.wa_id || from;\n\nconst normalizePhone = (raw) => {\n  const digits = String(raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    has_message: true,\n    should_skip: false,\n    signature_present: !!signatureHeader,\n    signature_valid,\n    valid_secret: true, // TODO: si activan validación estricta, usar signature_valid cuando llegue header\n\n    wa_id,\n    from,\n    timestamp: timestampSec,\n    isoTimestamp,\n    type,\n    text: textBody,\n    message_id: message.id || '',\n\n    // compatibilidad con ramas existentes\n    whatsapp: normalizePhone(from),\n    message_type: type,\n    media_id: '',\n    media_mime: '',\n  }\n}];\n"
       },
       "id": "8c109180-30db-436b-b1f4-fe0f1695526a",
       "name": "Normalizar y validar",
@@ -434,7 +444,7 @@
           "string": [
             {
               "name": "owner_whatsapp",
-              "value": "={{$vars.WHATSAPP_OWNER_NUMBER || $json.whatsapp}}"
+              "value": "={{\"__REPLACE_OWNER_NUMBER__\" || $json.whatsapp}}"
             }
           ]
         },
@@ -849,13 +859,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + $vars.PHONE_NUMBER_ID + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '__REPLACE_PHONE_NUMBER_ID__' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $vars.WHATSAPP_TOKEN}}"
+              "value": "={{'Bearer ' + '__REPLACE_WHATSAPP_TOKEN__'}}"
             },
             {
               "name": "Content-Type",
@@ -1233,13 +1243,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + $vars.PHONE_NUMBER_ID + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '__REPLACE_PHONE_NUMBER_ID__' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $vars.WHATSAPP_TOKEN}}"
+              "value": "={{'Bearer ' + '__REPLACE_WHATSAPP_TOKEN__'}}"
             },
             {
               "name": "Content-Type",
@@ -1646,7 +1656,7 @@
     },
     {
       "parameters": {
-        "url": "={{Array.isArray($json.media_ids) && $json.media_ids[0] ? ($vars.WHATSAPP_GRAPH_URL + '/' + $json.media_ids[0]) : ''}}",
+        "url": "={{Array.isArray($json.media_ids) && $json.media_ids[0] ? ('__REPLACE_GRAPH_URL__' + '/' + $json.media_ids[0]) : ''}}",
         "options": {
           "timeout": 10000
         }
@@ -1887,13 +1897,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + $vars.PHONE_NUMBER_ID + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '__REPLACE_PHONE_NUMBER_ID__' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $vars.WHATSAPP_TOKEN}}"
+              "value": "={{'Bearer ' + '__REPLACE_WHATSAPP_TOKEN__'}}"
             },
             {
               "name": "Content-Type",
@@ -1921,13 +1931,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + $vars.PHONE_NUMBER_ID + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '__REPLACE_PHONE_NUMBER_ID__' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $vars.WHATSAPP_TOKEN}}"
+              "value": "={{'Bearer ' + '__REPLACE_WHATSAPP_TOKEN__'}}"
             },
             {
               "name": "Content-Type",
@@ -1955,13 +1965,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + $vars.PHONE_NUMBER_ID + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '__REPLACE_PHONE_NUMBER_ID__' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $vars.WHATSAPP_TOKEN}}"
+              "value": "={{'Bearer ' + '__REPLACE_WHATSAPP_TOKEN__'}}"
             },
             {
               "name": "Content-Type",
@@ -1989,13 +1999,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + $vars.PHONE_NUMBER_ID + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '__REPLACE_PHONE_NUMBER_ID__' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $vars.WHATSAPP_TOKEN}}"
+              "value": "={{'Bearer ' + '__REPLACE_WHATSAPP_TOKEN__'}}"
             },
             {
               "name": "Content-Type",
@@ -2433,13 +2443,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + $vars.PHONE_NUMBER_ID + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '__REPLACE_PHONE_NUMBER_ID__' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $vars.WHATSAPP_TOKEN}}"
+              "value": "={{'Bearer ' + '__REPLACE_WHATSAPP_TOKEN__'}}"
             },
             {
               "name": "Content-Type",
@@ -2651,13 +2661,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + $vars.PHONE_NUMBER_ID + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '__REPLACE_PHONE_NUMBER_ID__' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + $vars.WHATSAPP_TOKEN}}"
+              "value": "={{'Bearer ' + '__REPLACE_WHATSAPP_TOKEN__'}}"
             },
             {
               "name": "Content-Type",
@@ -3033,7 +3043,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value1": "={{Boolean((\"__REPLACE_PHONE_NUMBER_ID__\" || '').trim()) && Boolean((\"__REPLACE_WHATSAPP_TOKEN__\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3054,7 +3064,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value1": "={{Boolean((\"__REPLACE_PHONE_NUMBER_ID__\" || '').trim()) && Boolean((\"__REPLACE_WHATSAPP_TOKEN__\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3075,7 +3085,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value1": "={{Boolean((\"__REPLACE_PHONE_NUMBER_ID__\" || '').trim()) && Boolean((\"__REPLACE_WHATSAPP_TOKEN__\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3096,7 +3106,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value1": "={{Boolean((\"__REPLACE_PHONE_NUMBER_ID__\" || '').trim()) && Boolean((\"__REPLACE_WHATSAPP_TOKEN__\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3117,7 +3127,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value1": "={{Boolean((\"__REPLACE_PHONE_NUMBER_ID__\" || '').trim()) && Boolean((\"__REPLACE_WHATSAPP_TOKEN__\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3138,7 +3148,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value1": "={{Boolean((\"__REPLACE_PHONE_NUMBER_ID__\" || '').trim()) && Boolean((\"__REPLACE_WHATSAPP_TOKEN__\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3159,7 +3169,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value1": "={{Boolean((\"__REPLACE_PHONE_NUMBER_ID__\" || '').trim()) && Boolean((\"__REPLACE_WHATSAPP_TOKEN__\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3180,7 +3190,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean(($vars.PHONE_NUMBER_ID || '').trim()) && Boolean(($vars.WHATSAPP_TOKEN || '').trim())}}",
+              "value1": "={{Boolean((\"__REPLACE_PHONE_NUMBER_ID__\" || '').trim()) && Boolean((\"__REPLACE_WHATSAPP_TOKEN__\" || '').trim())}}",
               "value2": true
             }
           ]
