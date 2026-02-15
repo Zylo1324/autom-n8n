@@ -3,14 +3,20 @@
   "nodes": [
     {
       "parameters": {
-        "path": "whatsapp-in-verify",
+        "path": "whatsapp-in",
         "responseMode": "responseNode",
-        "options": {},
+        "options": {
+          "allowMultipleMethods": true
+        },
         "httpMethod": "GET",
+        "httpMethods": [
+          "GET",
+          "POST"
+        ],
         "authentication": "none"
       },
       "id": "bab3accb-b1ad-4867-bb70-67e346b80600",
-      "name": "Webhook Verify",
+      "name": "Webhook WhatsApp",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
@@ -18,23 +24,6 @@
         5968
       ],
       "webhookId": "c18f0e3a-1d49-43a4-9b49-6a099b7b4871"
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "whatsapp-in-events",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "id": "d9085ff0-cee1-4796-b5e8-80afd3f7a3f9",
-      "name": "Webhook Events",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [
-        3392,
-        6304
-      ],
-      "webhookId": "55f8c857-1b67-4b34-97c0-b489df4bf7ba"
     },
     {
       "parameters": {
@@ -3909,28 +3898,6 @@
         ]
       ]
     },
-    "Webhook Verify": {
-      "main": [
-        [
-          {
-            "node": "IF verify ok",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Webhook Events": {
-      "main": [
-        [
-          {
-            "node": "Respond 200 ASAP",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Set Owner WhatsApp": {
       "main": [
         [
@@ -4091,6 +4058,24 @@
         [
           {
             "node": "Log / Stop vars missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "IF verify ok",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 200 ASAP",
             "type": "main",
             "index": 0
           }
