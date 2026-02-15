@@ -130,7 +130,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $json;\nconst headers = data.headers ?? {};\nconst payload = data.body ?? data;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0];\n\nconst signatureHeader = headers['x-hub-signature-256'] || headers['X-Hub-Signature-256'] || '';\nconst appSecret = \"<PEGA_AQUI_APP_SECRET>\" || '';\n\n// Validación opcional (no bloqueante por defecto)\nlet signature_valid = false;\nif (signatureHeader && appSecret) {\n  try {\n    const crypto = require('crypto');\n    const rawBody = data.rawBody || data.body || '';\n    const rawString = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);\n    const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawString).digest('hex')}`;\n    signature_valid = signatureHeader === expected;\n  } catch (error) {\n    signature_valid = false;\n  }\n}\n\nif (!message) {\n  return [{\n    json: {\n      has_message: false,\n      should_skip: true,\n      skip_reason: 'Evento sin messages (ej. status).',\n      signature_present: !!signatureHeader,\n      signature_valid,\n      valid_secret: true, // TODO: endurecer si se requiere bloqueo por firma\n    }\n  }];\n}\n\nconst type = message.type || 'text';\nconst textBody = message.text?.body || '';\nconst parsedTimestamp = Number(message.timestamp);\nconst timestampSec = Number.isFinite(parsedTimestamp) && parsedTimestamp > 0\n  ? parsedTimestamp\n  : Math.floor(Date.now() / 1000);\nconst isoTimestamp = Number.isFinite(timestampSec)\n  ? new Date(timestampSec * 1000).toISOString()\n  : '';\nconst from = message.from || '';\nconst wa_id = value.contacts?.[0]?.wa_id || from;\n\nconst normalizePhone = (raw) => {\n  const digits = String(raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    has_message: true,\n    should_skip: false,\n    signature_present: !!signatureHeader,\n    signature_valid,\n    valid_secret: true, // TODO: si activan validación estricta, usar signature_valid cuando llegue header\n\n    wa_id,\n    from,\n    timestamp: timestampSec,\n    isoTimestamp,\n    type,\n    text: textBody,\n    message_id: message.id || '',\n\n    // compatibilidad con ramas existentes\n    whatsapp: normalizePhone(from),\n    message_type: type,\n    media_id: '',\n    media_mime: '',\n  }\n}];\n"
+        "jsCode": "const data = $json;\nconst headers = data.headers ?? {};\nconst payload = data.body ?? data;\n\nconst entry = payload.entry?.[0] ?? {};\nconst change = entry.changes?.[0] ?? {};\nconst value = change.value ?? {};\nconst message = value.messages?.[0];\n\nconst signatureHeader = headers['x-hub-signature-256'] || headers['X-Hub-Signature-256'] || '';\nconst appSecret = \"7e1e6c046fc7e5765d85c340328f8b07\" || '';\n\n// Validación opcional (no bloqueante por defecto)\nlet signature_valid = false;\nif (signatureHeader && appSecret) {\n  try {\n    const crypto = require('crypto');\n    const rawBody = data.rawBody || data.body || '';\n    const rawString = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);\n    const expected = `sha256=${crypto.createHmac('sha256', appSecret).update(rawString).digest('hex')}`;\n    signature_valid = signatureHeader === expected;\n  } catch (error) {\n    signature_valid = false;\n  }\n}\n\nif (!message) {\n  return [{\n    json: {\n      has_message: false,\n      should_skip: true,\n      skip_reason: 'Evento sin messages (ej. status).',\n      signature_present: !!signatureHeader,\n      signature_valid,\n      valid_secret: true, // TODO: endurecer si se requiere bloqueo por firma\n    }\n  }];\n}\n\nconst type = message.type || 'text';\nconst textBody = message.text?.body || '';\nconst parsedTimestamp = Number(message.timestamp);\nconst timestampSec = Number.isFinite(parsedTimestamp) && parsedTimestamp > 0\n  ? parsedTimestamp\n  : Math.floor(Date.now() / 1000);\nconst isoTimestamp = Number.isFinite(timestampSec)\n  ? new Date(timestampSec * 1000).toISOString()\n  : '';\nconst from = message.from || '';\nconst wa_id = value.contacts?.[0]?.wa_id || from;\n\nconst normalizePhone = (raw) => {\n  const digits = String(raw || '').replace(/[^0-9]/g, '');\n  return digits ? `+${digits}` : '';\n};\n\nreturn [{\n  json: {\n    has_message: true,\n    should_skip: false,\n    signature_present: !!signatureHeader,\n    signature_valid,\n    valid_secret: true, // TODO: si activan validación estricta, usar signature_valid cuando llegue header\n\n    wa_id,\n    from,\n    timestamp: timestampSec,\n    isoTimestamp,\n    type,\n    text: textBody,\n    message_id: message.id || '',\n\n    // compatibilidad con ramas existentes\n    whatsapp: normalizePhone(from),\n    message_type: type,\n    media_id: '',\n    media_mime: '',\n  }\n}];\n"
       },
       "id": "8c109180-30db-436b-b1f4-fe0f1695526a",
       "name": "Normalizar y validar",
@@ -444,7 +444,7 @@
           "string": [
             {
               "name": "owner_whatsapp",
-              "value": "={{\"<PEGA_AQUI_TU_NUMERO_CON_CODIGO_PAIS>\" || $json.whatsapp}}"
+              "value": "={{\"51942632719\" || $json.whatsapp}}"
             }
           ]
         },
@@ -859,13 +859,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + '<PEGA_AQUI_PHONE_NUMBER_ID>' + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '899912159882516' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + '<PEGA_AQUI_ACCESS_TOKEN>'}}"
+              "value": "={{'Bearer ' + 'EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv'}}"
             },
             {
               "name": "Content-Type",
@@ -1243,13 +1243,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + '<PEGA_AQUI_PHONE_NUMBER_ID>' + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '899912159882516' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + '<PEGA_AQUI_ACCESS_TOKEN>'}}"
+              "value": "={{'Bearer ' + 'EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv'}}"
             },
             {
               "name": "Content-Type",
@@ -1897,13 +1897,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + '<PEGA_AQUI_PHONE_NUMBER_ID>' + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '899912159882516' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + '<PEGA_AQUI_ACCESS_TOKEN>'}}"
+              "value": "={{'Bearer ' + 'EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv'}}"
             },
             {
               "name": "Content-Type",
@@ -1931,13 +1931,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + '<PEGA_AQUI_PHONE_NUMBER_ID>' + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '899912159882516' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + '<PEGA_AQUI_ACCESS_TOKEN>'}}"
+              "value": "={{'Bearer ' + 'EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv'}}"
             },
             {
               "name": "Content-Type",
@@ -1965,13 +1965,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + '<PEGA_AQUI_PHONE_NUMBER_ID>' + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '899912159882516' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + '<PEGA_AQUI_ACCESS_TOKEN>'}}"
+              "value": "={{'Bearer ' + 'EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv'}}"
             },
             {
               "name": "Content-Type",
@@ -1999,13 +1999,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + '<PEGA_AQUI_PHONE_NUMBER_ID>' + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '899912159882516' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + '<PEGA_AQUI_ACCESS_TOKEN>'}}"
+              "value": "={{'Bearer ' + 'EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv'}}"
             },
             {
               "name": "Content-Type",
@@ -2443,13 +2443,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + '<PEGA_AQUI_PHONE_NUMBER_ID>' + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '899912159882516' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + '<PEGA_AQUI_ACCESS_TOKEN>'}}"
+              "value": "={{'Bearer ' + 'EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv'}}"
             },
             {
               "name": "Content-Type",
@@ -2661,13 +2661,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{'https://graph.facebook.com/v24.0/' + '<PEGA_AQUI_PHONE_NUMBER_ID>' + '/messages'}}",
+        "url": "={{'https://graph.facebook.com/v24.0/' + '899912159882516' + '/messages'}}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{'Bearer ' + '<PEGA_AQUI_ACCESS_TOKEN>'}}"
+              "value": "={{'Bearer ' + 'EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv'}}"
             },
             {
               "name": "Content-Type",
@@ -3043,7 +3043,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean((\"<PEGA_AQUI_PHONE_NUMBER_ID>\" || '').trim()) && Boolean((\"<PEGA_AQUI_ACCESS_TOKEN>\" || '').trim())}}",
+              "value1": "={{Boolean((\"899912159882516\" || '').trim()) && Boolean((\"EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3064,7 +3064,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean((\"<PEGA_AQUI_PHONE_NUMBER_ID>\" || '').trim()) && Boolean((\"<PEGA_AQUI_ACCESS_TOKEN>\" || '').trim())}}",
+              "value1": "={{Boolean((\"899912159882516\" || '').trim()) && Boolean((\"EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3085,7 +3085,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean((\"<PEGA_AQUI_PHONE_NUMBER_ID>\" || '').trim()) && Boolean((\"<PEGA_AQUI_ACCESS_TOKEN>\" || '').trim())}}",
+              "value1": "={{Boolean((\"899912159882516\" || '').trim()) && Boolean((\"EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3106,7 +3106,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean((\"<PEGA_AQUI_PHONE_NUMBER_ID>\" || '').trim()) && Boolean((\"<PEGA_AQUI_ACCESS_TOKEN>\" || '').trim())}}",
+              "value1": "={{Boolean((\"899912159882516\" || '').trim()) && Boolean((\"EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3127,7 +3127,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean((\"<PEGA_AQUI_PHONE_NUMBER_ID>\" || '').trim()) && Boolean((\"<PEGA_AQUI_ACCESS_TOKEN>\" || '').trim())}}",
+              "value1": "={{Boolean((\"899912159882516\" || '').trim()) && Boolean((\"EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3148,7 +3148,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean((\"<PEGA_AQUI_PHONE_NUMBER_ID>\" || '').trim()) && Boolean((\"<PEGA_AQUI_ACCESS_TOKEN>\" || '').trim())}}",
+              "value1": "={{Boolean((\"899912159882516\" || '').trim()) && Boolean((\"EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3169,7 +3169,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean((\"<PEGA_AQUI_PHONE_NUMBER_ID>\" || '').trim()) && Boolean((\"<PEGA_AQUI_ACCESS_TOKEN>\" || '').trim())}}",
+              "value1": "={{Boolean((\"899912159882516\" || '').trim()) && Boolean((\"EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv\" || '').trim())}}",
               "value2": true
             }
           ]
@@ -3190,7 +3190,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{Boolean((\"<PEGA_AQUI_PHONE_NUMBER_ID>\" || '').trim()) && Boolean((\"<PEGA_AQUI_ACCESS_TOKEN>\" || '').trim())}}",
+              "value1": "={{Boolean((\"899912159882516\" || '').trim()) && Boolean((\"EAAScCiQRLWQBQiA9wjBeWuMoROTL6DqIZCXLps1E5Hpy9bmrWi2QROLbruVVUwgnWDZABB9LaM8mlMRhwPWcFZCNORei7KHTNSTszx1z5sZCNsZAiZBRXzjCYy1rszGCQJK1mA5uW7ZCTtx7ALkS019Fzb9GKysVITI5OEmZAesp9BC2yMq0ovAyMtZCAvBZCPubuwdZCU29mJNjnHoWDkkcWFtkLRXDmwoZBX1DjB9cpdqtEpkWNRKaQoTFiZBbJx1KixaKW1zJ9cKjxWT7t3oLqPDN79Bpv\" || '').trim())}}",
               "value2": true
             }
           ]
