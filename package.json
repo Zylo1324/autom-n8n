@@ -1,0 +1,14 @@
+{
+  "name": "wa-proxy",
+  "version": "1.0.0",
+  "description": "Reverse proxy for Meta WhatsApp webhook to n8n",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "http-proxy-middleware": "^3.0.2"
+  }
+}
