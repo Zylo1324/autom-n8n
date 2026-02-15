@@ -72,26 +72,30 @@ const proxyMiddleware = createProxyMiddleware({
   xfwd: true,
   logLevel: 'silent',
 
-  // Reescribe solo path y conserva querystring automáticamente.
+  // Reescribe path y conserva SIEMPRE el querystring original.
   pathRewrite: (path, req) => {
     const rewrittenPath = pickTargetPath(req);
 
-    if (rewrittenPath === undefined) {
+    if (rewrittenPath === undefined || rewrittenPath === null) {
       return path;
     }
 
-    if (rewrittenPath === null) {
-      return path;
-    }
+    const queryIndex = req.originalUrl.indexOf('?');
+    const originalQuery = queryIndex >= 0 ? req.originalUrl.slice(queryIndex) : '';
+    const finalPath = `${rewrittenPath}${originalQuery}`;
 
-    console.log(`[REWRITE] ${req.method} ${path} -> ${rewrittenPath}`);
-    return rewrittenPath;
+    console.log(`[REWRITE] ${req.method} ${path} -> ${finalPath}`);
+    return finalPath;
   },
 
   onProxyRes: (proxyRes, req, res) => {
     // OUT: status code final devuelto por n8n.
     const statusCode = proxyRes.statusCode || 0;
-    console.log(`[OUT] ${req.method} ${req.originalUrl} -> ${statusCode}`);
+    const statusMessage = proxyRes.statusMessage || '';
+    console.log(`[OUT] ${req.method} ${req.originalUrl} -> ${statusCode}${statusMessage ? ` ${statusMessage}` : ''}`);
+    if (statusCode >= 400) {
+      console.error(`[OUT ERROR] ${req.method} ${req.originalUrl} -> ${statusCode}${statusMessage ? ` ${statusMessage}` : ''}`);
+    }
 
     // Asegura que si n8n devuelve 5xx se mantenga tal cual.
     if (!res.headersSent) {
@@ -125,6 +129,14 @@ app.use((req, res, next) => {
   // Solo permitir GET/POST en rutas webhook.
   if (shouldProxy(req)) {
     const targetPath = pickTargetPath(req);
+
+    if (req.path === PUBLIC_BASE) {
+      if (req.method === 'GET') {
+        console.log('[ROUTE] GET -> verify');
+      } else if (req.method === 'POST') {
+        console.log('[ROUTE] POST -> event');
+      }
+    }
 
     if (targetPath === null) {
       res.set('Allow', 'GET, POST');
