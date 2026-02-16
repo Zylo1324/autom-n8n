@@ -1999,7 +1999,8 @@
         "rawContentType": "application/json",
         "options": {
           "timeout": 10000
-        }
+        },
+        "body": "={\"messaging_product\":\"whatsapp\",\"to\":\"{{$json[\"wa_id\"] || $json[\"from\"] || $json[\"whatsapp\"]}}\",\"type\":\"text\",\"text\":{\"preview_url\":false,\"body\":\"{{$node[\"ia_responder\"].json[\"choices\"][0][\"message\"][\"content\"]}}\"}}"
       },
       "id": "22ce51a8-f113-432c-8e61-331a9cd3581a",
       "name": "Enviar respuesta IA",
@@ -3194,6 +3195,133 @@
         22464
       ],
       "webhookId": "55f8c857-1b67-4b34-97c0-b489df4bf7ba"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1naFMXpB-oAPFuVmmUZ6U9rpjwJwFvF-r7kOkV1HXAjs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "IA con Memoria Dinámica y n8n",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "c58da1c1-57ac-4e78-930a-e95930a87a47",
+      "name": "cerebro",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        30016,
+        22816
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const memoria = items.map(row => {\n  return {\n    contexto: row.json[\"Contexto/Tag\"],\n    clave: row.json[\"Pregunta o Dato Clave\"],\n    respuesta: row.json[\"Respuesta Correcta\"]\n  };\n});\n\nconst origen = $items('Construir contexto', 0, 0)[0]?.json || {};\n\nreturn [\n  {\n    json: {\n      ...origen,\n      mensaje: origen.user_input || origen.combined_text || origen.text || '',\n      memoria_json: JSON.stringify(memoria)\n    }\n  }\n];"
+      },
+      "id": "0c2a3628-ffea-4bfe-acf8-e83a93c887b7",
+      "name": "compactar_memoria",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        30224,
+        22816
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GROQ_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"llama-3.1-8b-instant\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres un asistente experto en ventas. SOLO puedes usar la siguiente base de datos JSON como conocimiento. No inventes precios ni políticas.\\n\\nBASE_DE_DATOS:\\n{{$node[\\\"compactar_memoria\\\"].json[\\\"memoria_json\\\"]}}\\n\\nReglas:\\n- Solo vender el curso de IA de $20 USD\\n- No inventar información\\n- No salir del contexto\\n- Si no sabes algo, decir que confirmarás con un asesor\\n- Responder en español\\n- Ser natural y convincente\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$json[\\\"mensaje\\\"]}}\"\n    }\n  ],\n  \"temperature\": 0.3\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "2cb816a4-87fa-4550-b0fe-2420885769c4",
+      "name": "ia_responder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        30448,
+        22816
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{($node[\"ia_responder\"].json[\"choices\"]?.[0]?.[\"message\"]?.[\"content\"] || \"\").toLowerCase()}}",
+              "operation": "contains",
+              "value2": "asesor"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d9d1c67a-5f76-4fb2-972f-1bd892350403",
+      "name": "IF no sabe",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        30656,
+        22688
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1naFMXpB-oAPFuVmmUZ6U9rpjwJwFvF-r7kOkV1HXAjs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "no_sabe",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{new Date().toISOString()}}",
+            "Pregunta del Cliente (Lo que no supo responder)": "={{$node[\"compactar_memoria\"].json[\"mensaje\"]}}",
+            "Estado": "PENDIENTE"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "0777ac81-0bd6-4f25-8524-fdaf1bfa4f3b",
+      "name": "guardar_no_sabe",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        30880,
+        22688
+      ]
     }
   ],
   "pinData": {},
@@ -3458,7 +3586,7 @@
       "main": [
         [
           {
-            "node": "OpenAI Texto",
+            "node": "cerebro",
             "type": "main",
             "index": 0
           }
@@ -4084,6 +4212,56 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "cerebro": {
+      "main": [
+        [
+          {
+            "node": "compactar_memoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "compactar_memoria": {
+      "main": [
+        [
+          {
+            "node": "ia_responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ia_responder": {
+      "main": [
+        [
+          {
+            "node": "IF no sabe",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF vars ok Enviar respuesta IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF no sabe": {
+      "main": [
+        [
+          {
+            "node": "guardar_no_sabe",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     }
   },
