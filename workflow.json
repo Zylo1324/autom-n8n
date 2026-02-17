@@ -425,7 +425,7 @@
           "string": [
             {
               "name": "owner_whatsapp",
-              "value": "={{\"51942632719\" || $json.whatsapp}}"
+              "value": "={{\"51907651089\"}}"
             }
           ]
         },
