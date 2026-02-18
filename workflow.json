@@ -417,7 +417,8 @@
       "position": [
         54400,
         20912
-      ]
+      ],
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -1283,7 +1284,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: $json.whatsapp || '',\n    mensaje_usuario: 'Solicitud de alta enviada',\n    tipo_mensaje: 'NUEVO_CLIENTE',\n    media_url: '',\n    procesado: 'SI'\n  }\n}];"
+        "jsCode": "const batch = $items(\"Agrupar y debounce\")[0]?.json || {};\n\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: batch.whatsapp || \"\",\n    mensaje_usuario: \"Solicitud de alta enviada\",\n    tipo_mensaje: \"NUEVO_CLIENTE\",\n    media_url: \"\",\n    procesado: \"SI\",\n    batch_id: batch.batch_id || \"\",\n    pending_message_ids: batch.pending_message_ids || [],\n    pending_timestamps: batch.pending_timestamps || []\n  }\n}];"
       },
       "id": "31d809f8-8147-4ac1-9b88-ba417cd08052",
       "name": "Preparar log nuevo",
@@ -1548,16 +1549,16 @@
         "values": {
           "string": [
             {
-              "name": "message_id",
-              "value": "={{$json.message_id}}"
-            },
-            {
               "name": "status",
               "value": "={{$json.status}}"
             },
             {
               "name": "batch_id",
               "value": "={{$json.batch_id}}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{$json.message_id}}"
             }
           ]
         },
@@ -2848,7 +2849,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const ids = $json.pending_message_ids;\n\n// 1) Normaliza a array\nlet messageIds = [];\nif (Array.isArray(ids)) messageIds = ids.filter(Boolean);\nelse if (typeof ids === 'string' && ids.trim()) messageIds = [ids.trim()];\n\n// 2) Si no hay IDs, igual devuelve 1 item \"skip\"\nif (!messageIds.length) {\n  return [{\n    json: {\n      message_id: null,\n      status: 'SKIP_NO_PENDING_IDS',\n      batch_id: $json.batch_id || '',\n    }\n  }];\n}\n\n// 3) Si sí hay IDs, crea 1 item por id\nreturn messageIds.map(messageId => ({\n  json: {\n    message_id: messageId,\n    status: 'DONE',\n    batch_id: $json.batch_id || '',\n  }\n}));"
+        "jsCode": "const batch = $json;\n\nconst ids =\n  batch.pending_message_ids ||\n  batch.pendig_messages_ids ||\n  [];\n\nif (!ids.length) {\n  return [{\n    json: {\n      message_id: null,\n      status: \"SKIP_NO_PENDING_IDS\",\n      batch_id: batch.batch_id || \"\"\n    }\n  }];\n}\n\nreturn ids.map(message_id => ({\n  json: {\n    message_id,\n    status: \"DONE\",\n    batch_id: batch.batch_id || \"\",\n    whatsapp: batch.whatsapp || \"\"\n  }\n}));"
       },
       "id": "dc276772-89e8-4a06-b5ee-3eca555e3c07",
       "name": "Preparar buffer DONE (nuevo)",
@@ -4370,7 +4371,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "0ce53594-3074-4ddf-b119-f602904df77c",
+  "versionId": "322243b4-f41f-47d0-90c3-51dda25e5931",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "437eaedb457c8fcbb6da94c597f8ad77b927aa083445e4a31402725053a3292f"
