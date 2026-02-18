@@ -1284,7 +1284,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const batch = $items(\"Agrupar y debounce\")[0]?.json || {};\n\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: batch.whatsapp || \"\",\n    mensaje_usuario: \"Solicitud de alta enviada\",\n    tipo_mensaje: \"NUEVO_CLIENTE\",\n    media_url: \"\",\n    procesado: \"SI\",\n    batch_id: batch.batch_id || \"\",\n    pending_message_ids: batch.pending_message_ids || [],\n    pending_timestamps: batch.pending_timestamps || []\n  }\n}];"
+        "jsCode": "const batch = $items('Agrupar y debounce')[0]?.json || {};\nconst httpResult = $json || {};\n\n// 1) No loguear si el envío HTTP falló (con continueOnFail=true igualmente llega aquí)\nconst hasHttpError = Boolean(httpResult.error || httpResult.errorMessage || httpResult.statusCode >= 400);\nconst hasWaMessageId = Boolean(httpResult.messages?.[0]?.id);\nif (hasHttpError && !hasWaMessageId) {\n  return [];\n}\n\n// 2) Anti-duplicados por batch_id para evitar múltiples \"Solicitud de alta enviada\"\nconst staticData = getWorkflowStaticData('global');\nif (!staticData.loggedNuevoClienteBatches) staticData.loggedNuevoClienteBatches = {};\nconst dedupeKey = `${batch.batch_id || ''}|${batch.whatsapp || ''}`;\nif (staticData.loggedNuevoClienteBatches[dedupeKey]) {\n  return [];\n}\nstaticData.loggedNuevoClienteBatches[dedupeKey] = new Date().toISOString();\n\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    whatsapp: batch.whatsapp || '',\n    mensaje_usuario: 'Solicitud de alta enviada',\n    tipo_mensaje: 'NUEVO_CLIENTE',\n    media_url: '',\n    procesado: 'SI',\n    batch_id: batch.batch_id || '',\n    pending_message_ids: Array.isArray(batch.pending_message_ids) ? batch.pending_message_ids : [],\n    pending_timestamps: Array.isArray(batch.pending_timestamps) ? batch.pending_timestamps : []\n  }\n}];"
       },
       "id": "31d809f8-8147-4ac1-9b88-ba417cd08052",
       "name": "Preparar log nuevo",
@@ -2849,7 +2849,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const batch = $json;\n\nconst ids =\n  batch.pending_message_ids ||\n  batch.pendig_messages_ids ||\n  [];\n\nif (!ids.length) {\n  return [{\n    json: {\n      message_id: null,\n      status: \"SKIP_NO_PENDING_IDS\",\n      batch_id: batch.batch_id || \"\"\n    }\n  }];\n}\n\nreturn ids.map(message_id => ({\n  json: {\n    message_id,\n    status: \"DONE\",\n    batch_id: batch.batch_id || \"\",\n    whatsapp: batch.whatsapp || \"\"\n  }\n}));"
+        "jsCode": "const source = $json;\nconst batch = $items('Agrupar y debounce')[0]?.json || {};\n\n// Tomar IDs primero del batch original (camino más confiable), con fallback al input actual\nconst rawIds =\n  batch.pending_message_ids ??\n  source.pending_message_ids ??\n  source.pending_messages_ids ??\n  source.pendig_messages_ids ??\n  [];\n\nconst ids = Array.isArray(rawIds)\n  ? [...new Set(rawIds.filter(Boolean))]\n  : (rawIds ? [rawIds] : []);\n\nif (!ids.length) {\n  return [{\n    json: {\n      message_id: null,\n      status: 'SKIP_NO_PENDING_IDS',\n      batch_id: batch.batch_id || source.batch_id || '',\n      whatsapp: batch.whatsapp || source.whatsapp || ''\n    }\n  }];\n}\n\nreturn ids.map(message_id => ({\n  json: {\n    message_id,\n    status: 'DONE',\n    batch_id: batch.batch_id || source.batch_id || '',\n    whatsapp: batch.whatsapp || source.whatsapp || ''\n  }\n}));"
       },
       "id": "dc276772-89e8-4a06-b5ee-3eca555e3c07",
       "name": "Preparar buffer DONE (nuevo)",
